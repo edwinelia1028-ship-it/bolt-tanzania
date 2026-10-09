@@ -437,6 +437,12 @@ app.get('/api/sms/logs', (req, res) => {
   res.json({ success: true, logs: sms.getSMSLogs() });
 });
 
+// 10. API ya Kuangalia Salio la Beem Africa SMS Gateway
+app.get('/api/sms/balance', async (req, res) => {
+  const balanceInfo = await sms.getBeemBalance();
+  res.json(balanceInfo);
+});
+
 // ==========================================
 // SOCKET.IO REAL-TIME LOGIC
 // ==========================================

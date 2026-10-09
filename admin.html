@@ -291,13 +291,18 @@
               📩
             </div>
             <div>
-              <h3 class="font-extrabold text-gray-900 text-base">Kumbukumbu za Ujumbe wa SMS (SMS Gateway)</h3>
+              <h3 class="font-extrabold text-gray-900 text-base">Kumbukumbu za Ujumbe wa SMS (Beem Africa SMS Gateway)</h3>
               <p class="text-xs text-gray-400">Arifa za safari kwa madereva na abiria • Namba ya Msaada: 0626198847</p>
             </div>
           </div>
-          <span class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5" id="smsCountBadge">
-            0 SMS Zimetumwa
-          </span>
+          <div class="flex items-center gap-2">
+            <span id="beemStatusBadge" class="text-xs bg-gray-100 text-gray-700 font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Inakagua Beem...
+            </span>
+            <span class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5" id="smsCountBadge">
+              0 SMS Zimetumwa
+            </span>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -535,6 +540,27 @@
             }
           } catch (smsErr) {
             console.error("Kosa la kupakia SMS logs:", smsErr);
+          }
+
+          // Angalia Hali ya Beem Africa Gateway & Salio
+          try {
+            const bRes = await fetch('/api/sms/balance');
+            const bData = await bRes.json();
+            const bBadge = document.getElementById('beemStatusBadge');
+            if (bBadge) {
+              if (bData.configured && bData.success) {
+                bBadge.className = "text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5";
+                bBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> <span>Beem SMS: Salio ${bData.balance}</span>`;
+              } else if (bData.configured && !bData.success) {
+                bBadge.className = "text-xs bg-rose-100 text-rose-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5";
+                bBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span> <span>Beem: Angalia API Keys</span>`;
+              } else {
+                bBadge.className = "text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5";
+                bBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> <span>Beem: Hali ya Demo</span>`;
+              }
+            }
+          } catch (bErr) {
+            console.warn("Kosa la kupakia salio la Beem:", bErr);
           }
 
         } else if (res.status === 401) {
