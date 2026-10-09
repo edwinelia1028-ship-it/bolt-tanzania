@@ -255,11 +255,14 @@
 
       <!-- TRANSACTIONS & COMMISSION LEDGER -->
       <div class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
           <div>
             <h3 class="font-extrabold text-gray-900 text-base">Orodha ya Safari & Mgao wa Kamisheni (15%)</h3>
-            <p class="text-xs text-gray-400">Miamala yote iliyorekodiwa kwenye Database</p>
+            <p class="text-xs text-gray-400">Miamala yote iliyorekodiwa kwenye Database • M-Pesa, Tigo Pesa, Selcom</p>
           </div>
+          <span id="paymentGatewayBadge" class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> <span id="paymentGatewayText">Gateway: Inapakia...</span>
+          </span>
         </div>
 
         <div class="overflow-x-auto">
@@ -561,6 +564,18 @@
             }
           } catch (bErr) {
             console.warn("Kosa la kupakia salio la Beem:", bErr);
+          }
+
+          // Angalia Hali ya Gateway ya Malipo (Selcom, AzamPay, Demo)
+          try {
+            const gwRes = await fetch('/api/payments/gateway-info');
+            const gwData = await gwRes.json();
+            const gwText = document.getElementById('paymentGatewayText');
+            if (gwText && gwData.activeGateway) {
+              gwText.innerText = `Malipo: ${gwData.activeGateway}`;
+            }
+          } catch (gwErr) {
+            console.warn("Kosa la gateway info:", gwErr);
           }
 
         } else if (res.status === 401) {

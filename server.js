@@ -10,6 +10,8 @@ const bcrypt = require('bcryptjs');
 const db = require('./db');
 // Mfumo wa SMS Notifications
 const sms = require('./sms');
+// Mfumo wa Malipo Halisi ya Simu (M-Pesa, Tigo Pesa, Selcom, AzamPay)
+const payment = require('./payment');
 
 const app = express();
 const server = http.createServer(app);
@@ -374,9 +376,9 @@ app.get('/api/rides/history', (req, res) => {
   }
 });
 
-// 7. API YA MALIPO YA SIMU (M-PESA / TIGO PESA / AIRTEL MONEY STK PUSH)
-app.post('/api/payments/stk-push', (req, res) => {
-  const { phoneNumber, provider, amount, rideId } = req.body;
+// 7. API YA MALIPO YA SIMU (M-PESA / TIGO PESA / AIRTEL MONEY / SELCOM STK PUSH)
+app.post('/api/payments/stk-push', async (req, res) => {
+  const { phoneNumber, provider, amount, rideId, description } = req.body;
 
   if (!phoneNumber || !amount) {
     return res.status(400).json({
@@ -385,45 +387,37 @@ app.post('/api/payments/stk-push', (req, res) => {
     });
   }
 
-  let cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
-  if (cleanPhone.startsWith('0')) {
-    cleanPhone = '255' + cleanPhone.substring(1);
-  }
-
-  const prefix = (provider || 'mpesa').toUpperCase();
-  const txId = `${prefix}-TZ-${Math.floor(10000000 + Math.random() * 90000000)}`;
-
-  console.log(`===============================================`);
-  console.log(`📱 [STK PUSH IMETUMWA KWA MTEJA]`);
-  console.log(`Mtandao: ${provider || 'M-Pesa'} | Namba: ${cleanPhone}`);
-  console.log(`Kiasi: TZS ${amount.toLocaleString()} | Kumbukumbu: ${txId}`);
-  console.log(`===============================================`);
-
-  setTimeout(() => {
-    const paymentRecord = {
-      transactionId: txId,
-      rideId: rideId || "RIDE_" + Date.now(),
-      phone: cleanPhone,
-      provider: provider || 'mpesa',
-      amount: Number(amount),
-      currency: "TZS",
-      status: "COMPLETED",
-      timestamp: new Date().toISOString()
-    };
-
-    db.addPayment(paymentRecord);
-
-    // Tuma SMS ya Risiti kwenye simu ya mteja
-    sms.notifyPaymentReceipt(cleanPhone, amount, provider, txId);
-
-    res.json({
-      success: true,
-      transactionId: txId,
-      status: "COMPLETED",
-      message: `Malipo ya TZS ${amount.toLocaleString()} yamethibitishwa kikamilifu kupitia ${prefix}!`,
-      details: paymentRecord
+  try {
+    const paymentResult = await payment.initiateSTKPush({
+      phoneNumber,
+      amount,
+      provider,
+      rideId,
+      description
     });
-  }, 2500);
+    res.json(paymentResult);
+  } catch (error) {
+    console.error("Payment error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Hitilafu ya kuanzisha malipo ya simu."
+    });
+  }
+});
+
+// 7.5 API YA WEBHOOK / CALLBACK KUTOKA SELCOM / AZAMPAY / VODACOM
+app.post('/api/payments/webhook', async (req, res) => {
+  try {
+    const result = await payment.handlePaymentWebhook(req.body);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7.6 API YA KUANGALIA TAARIFA ZA GATEWAYS ZINAZOTUMIKA
+app.get('/api/payments/gateway-info', (req, res) => {
+  res.json(payment.getPaymentGatewayInfo());
 });
 
 // 8. API ya Kuangalia Madereva Walio Hewani
