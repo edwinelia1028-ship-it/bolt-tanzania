@@ -74,6 +74,19 @@
     <!-- RAMANI YA DEREVA -->
     <div id="map"></div>
 
+    <!-- FLOATING MAP TYPE SWITCHER (DEREVA: GOOGLE MAPS & GOOGLE EARTH) -->
+    <div class="absolute top-20 right-5 z-20 bg-gray-900/90 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-gray-800 flex items-center gap-1 text-xs font-bold">
+      <button type="button" onclick="setDriverMapLayer('google_streets')" id="drvMapBtn-google_streets" class="px-3 py-1.5 rounded-xl bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5">
+        <i class="fa-solid fa-map"></i> <span>Google Maps</span>
+      </button>
+      <button type="button" onclick="setDriverMapLayer('google_earth')" id="drvMapBtn-google_earth" class="px-3 py-1.5 rounded-xl text-gray-400 hover:text-white transition flex items-center gap-1.5">
+        <i class="fa-solid fa-satellite"></i> <span>Google Earth</span>
+      </button>
+      <a id="driverEarthExtLink" href="https://earth.google.com/web/@-6.8120,39.2820,150a,1000d,35y,0h,0t,0r" target="_blank" class="px-2.5 py-1.5 rounded-xl text-blue-400 hover:bg-gray-800 transition flex items-center gap-1" title="Fungua Google Earth 3D">
+        <i class="fa-solid fa-earth-africa"></i> <span class="hidden sm:inline">Earth 3D</span>
+      </a>
+    </div>
+
     <!-- STATS FLOATING PANEL YA DEREVA -->
     <div class="absolute top-20 left-5 z-20 w-80 bg-gray-900/90 backdrop-blur-md rounded-3xl border border-gray-800 p-4 shadow-2xl">
       <div class="flex justify-between items-center mb-3">
@@ -127,10 +140,16 @@
         <span class="text-xl font-black text-emerald-400" id="activeTripFare">TZS 11,900</span>
       </div>
 
-      <div class="text-xs text-gray-300 space-y-1 mb-4">
+      <div class="text-xs text-gray-300 space-y-1 mb-3">
         <p><span class="text-emerald-400 font-bold">• Pickup:</span> <span id="activeTripPickup">Posta Mpya</span></p>
         <p><span class="text-rose-400 font-bold">■ Dest:</span> <span id="activeTripDest">Mlimani City</span></p>
       </div>
+
+      <!-- GOOGLE MAPS DIRECT NAVIGATOR -->
+      <a id="navGoogleMapsBtn" href="#" target="_blank" class="w-full mb-3 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-diamond-turn-right text-base text-white"></i>
+        <span>Fungua Google Maps Navigator (Turn-by-turn)</span>
+      </a>
 
       <div class="grid grid-cols-2 gap-3">
         <button onclick="alert('Inapiga simu kwa abiria: +255 714 555 123')" class="py-3 bg-gray-800 hover:bg-gray-700 text-emerald-400 rounded-2xl font-bold text-xs flex items-center justify-center gap-2">
@@ -164,11 +183,57 @@
   </div>
 
   <script>
-    // 1. RAMANI YA DEREVA
-    const map = L.map('map').setView([-6.8120, 39.2820], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    // 1. RAMANI YA DEREVA (Google Maps & Google Earth Hybrid)
+    const drvGoogleStreets = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://maps.google.com" target="_blank">Google Maps</a>'
+    });
+
+    const drvGoogleEarthHybrid = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://earth.google.com" target="_blank">Google Earth</a>'
+    });
+
+    const drvGoogleEarthSat = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; Google Earth Satellite'
+    });
+
+    const map = L.map('map', {
+      center: [-6.8120, 39.2820],
+      zoom: 14,
+      layers: [drvGoogleStreets]
+    });
+
+    let currentDriverBaseLayer = drvGoogleStreets;
+
+    const drvBaseLayers = {
+      "🗺️ Google Maps": drvGoogleStreets,
+      "🛰️ Google Earth (Hybrid)": drvGoogleEarthHybrid,
+      "🌍 Google Earth (Satellite)": drvGoogleEarthSat
+    };
+    L.control.layers(drvBaseLayers, null, { position: 'bottomright' }).addTo(map);
+
+    function setDriverMapLayer(type) {
+      map.removeLayer(currentDriverBaseLayer);
+      const btnStreets = document.getElementById('drvMapBtn-google_streets');
+      const btnEarth = document.getElementById('drvMapBtn-google_earth');
+
+      if (type === 'google_earth') {
+        currentDriverBaseLayer = drvGoogleEarthHybrid;
+        map.addLayer(drvGoogleEarthHybrid);
+        if (btnEarth) btnEarth.className = "px-3 py-1.5 rounded-xl bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5";
+        if (btnStreets) btnStreets.className = "px-3 py-1.5 rounded-xl text-gray-400 hover:text-white transition flex items-center gap-1.5";
+      } else {
+        currentDriverBaseLayer = drvGoogleStreets;
+        map.addLayer(drvGoogleStreets);
+        if (btnStreets) btnStreets.className = "px-3 py-1.5 rounded-xl bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5";
+        if (btnEarth) btnEarth.className = "px-3 py-1.5 rounded-xl text-gray-400 hover:text-white transition flex items-center gap-1.5";
+      }
+    }
 
     let driverPos = [-6.8120, 39.2820];
     const carIcon = L.divIcon({
@@ -311,6 +376,12 @@
       document.getElementById('activeTripFare').innerText = `TZS ${currentRideData.fare.toLocaleString()}`;
       document.getElementById('activeTripPickup').innerText = currentRideData.pickup.address;
       document.getElementById('activeTripDest').innerText = currentRideData.destination.address;
+
+      // Weka kiungo cha Google Maps Navigator moja kwa moja kwa ajili ya dereva
+      const navBtn = document.getElementById('navGoogleMapsBtn');
+      if (navBtn && currentRideData.pickup) {
+        navBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${currentRideData.pickup.lat},${currentRideData.pickup.lng}&travelmode=driving`;
+      }
 
       // Animate gari kuelekea kumchukua abiria
       let steps = 0;

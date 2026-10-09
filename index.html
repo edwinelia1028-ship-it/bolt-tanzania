@@ -90,6 +90,19 @@
     <!-- MAP CONTAINER -->
     <div id="map"></div>
 
+    <!-- FLOATING MAP TYPE SWITCHER (GOOGLE MAPS & GOOGLE EARTH) -->
+    <div class="absolute top-20 right-5 z-20 bg-white/95 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-gray-200 flex items-center gap-1 text-xs font-bold">
+      <button type="button" onclick="setMapLayer('google_streets')" id="mapBtn-google_streets" class="px-3 py-1.5 rounded-xl bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5">
+        <i class="fa-solid fa-map"></i> <span>Google Maps</span>
+      </button>
+      <button type="button" onclick="setMapLayer('google_earth')" id="mapBtn-google_earth" class="px-3 py-1.5 rounded-xl text-gray-700 hover:bg-gray-100 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-satellite"></i> <span>Google Earth</span>
+      </button>
+      <a id="extGoogleEarthLink" href="https://earth.google.com/web/@-6.8163,39.2803,150a,1000d,35y,0h,0t,0r" target="_blank" class="px-2.5 py-1.5 rounded-xl text-blue-600 hover:bg-blue-50 transition flex items-center gap-1" title="Fungua Google Earth 3D">
+        <i class="fa-solid fa-earth-africa"></i> <span class="hidden sm:inline">Earth 3D</span>
+      </a>
+    </div>
+
     <!-- PASSENGER BOOKING PANEL -->
     <div id="passengerPanel" class="absolute top-20 left-6 z-20 w-96 bg-white rounded-3xl shadow-2xl p-5 border border-gray-100 max-h-[88vh] overflow-y-auto">
       
@@ -217,6 +230,13 @@
             </div>
           </div>
         </div>
+
+        <!-- GOOGLE MAPS DIRECT ROUTE PREVIEW BUTTON -->
+        <a id="googleMapsRouteBtn" href="https://www.google.com/maps/dir/?api=1&origin=-6.8163,39.2803&destination=-6.7725,39.2208&travelmode=driving" target="_blank"
+          class="mb-3 w-full py-2.5 px-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition flex items-center justify-center gap-2 border border-blue-200 shadow-sm" title="Fungua Njia Kamili kwenye Google Maps App">
+          <i class="fa-solid fa-diamond-turn-right text-blue-600"></i>
+          <span>Fungua Njia kwenye Google Maps App</span>
+        </a>
 
         <!-- Request Button -->
         <button onclick="requestRide()" class="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-base shadow-lg shadow-emerald-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">
@@ -381,11 +401,64 @@
 
   <!-- CLIENT SCRIPT -->
   <script>
-    // 1. RAMANI (Leaflet Map)
-    const map = L.map('map').setView([-6.8163, 39.2803], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    // 1. RAMANI (Google Maps na Google Earth Satellite Layers)
+    const googleStreets = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://maps.google.com" target="_blank">Google Maps</a>'
+    });
+
+    const googleEarthHybrid = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://earth.google.com" target="_blank">Google Earth</a>'
+    });
+
+    const googleEarthSat = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; Google Earth Satellite'
+    });
+
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+    });
+
+    const map = L.map('map', {
+      center: [-6.8163, 39.2803],
+      zoom: 13,
+      layers: [googleStreets]
+    });
+
+    let currentBaseLayer = googleStreets;
+
+    // Kidhibiti cha Safu za Ramani (Leaflet Layer Control)
+    const baseLayers = {
+      "🗺️ Google Maps": googleStreets,
+      "🛰️ Google Earth (Hybrid)": googleEarthHybrid,
+      "🌍 Google Earth (Satellite)": googleEarthSat,
+      "🌐 OpenStreetMap": osmLayer
+    };
+    L.control.layers(baseLayers, null, { position: 'bottomright' }).addTo(map);
+
+    function setMapLayer(type) {
+      map.removeLayer(currentBaseLayer);
+      const btnStreets = document.getElementById('mapBtn-google_streets');
+      const btnEarth = document.getElementById('mapBtn-google_earth');
+
+      if (type === 'google_earth') {
+        currentBaseLayer = googleEarthHybrid;
+        map.addLayer(googleEarthHybrid);
+        if (btnEarth) btnEarth.className = "px-3 py-1.5 rounded-xl bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5";
+        if (btnStreets) btnStreets.className = "px-3 py-1.5 rounded-xl text-gray-700 hover:bg-gray-100 transition flex items-center gap-1.5";
+      } else {
+        currentBaseLayer = googleStreets;
+        map.addLayer(googleStreets);
+        if (btnStreets) btnStreets.className = "px-3 py-1.5 rounded-xl bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5";
+        if (btnEarth) btnEarth.className = "px-3 py-1.5 rounded-xl text-gray-700 hover:bg-gray-100 transition flex items-center gap-1.5";
+      }
+    }
 
     let pickupCoords = [-6.8163, 39.2803];
     let destCoords = [-6.7725, 39.2208];
@@ -543,10 +616,13 @@
               document.getElementById('tripDistance').innerText = `Umbali: ${d.distanceKm} km (${d.estimatedMinutes} dk)`;
             }
           }
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      // Sasisha viungo vya Google Maps na Google Earth
+      const gMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords[0]},${pickupCoords[1]}&destination=${destCoords[0]},${destCoords[1]}&travelmode=driving`;
+      const earthUrl = `https://earth.google.com/web/@${pickupCoords[0]},${pickupCoords[1]},200a,1000d,35y,0h,0t,0r`;
+      const gBtn = document.getElementById('googleMapsRouteBtn');
+      if (gBtn) gBtn.href = gMapsUrl;
+      const eLink = document.getElementById('extGoogleEarthLink');
+      if (eLink) eLink.href = earthUrl;
     }
 
     function onPaymentProviderChange() {
