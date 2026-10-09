@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bolt Admin - Tovuti ya Msimamizi</title>
+  <title>Bolt Admin - Tovuti ya Msimamizi (Imelindwa)</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,188 +15,304 @@
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
 
-  <!-- TOP HEADER -->
-  <header class="bg-white border-b border-gray-200 sticky top-0 z-30 px-6 py-4 flex justify-between items-center shadow-sm">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-purple-600/30">
-        👑
-      </div>
-      <div>
-        <h1 class="text-xl font-black text-gray-900 tracking-tight">Bolt <span class="text-purple-600">Admin Portal</span></h1>
-        <p class="text-xs text-gray-400">Dashibodi ya Msimamizi wa Biashara na Kamisheni (15%)</p>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-3">
-      <button onclick="loadAdminData()" class="px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition flex items-center gap-1.5">
-        <i class="fa-solid fa-arrows-rotate"></i> Sasisha Data
-      </button>
-
-      <a href="/" class="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition flex items-center gap-1.5">
-        <i class="fa-solid fa-user"></i> App ya Abiria
-      </a>
-
-      <a href="/driver" class="px-3.5 py-2 rounded-xl bg-gray-900 text-white hover:bg-black text-xs font-bold transition flex items-center gap-1.5">
-        <i class="fa-solid fa-car"></i> App ya Dereva
-      </a>
-    </div>
-  </header>
-
-  <!-- MAIN BODY -->
-  <main class="max-w-7xl mx-auto p-6 space-y-6">
-
-    <!-- KPI STATS CARDS -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+  <!-- 1. LOGIN OVERLAY KWA AJILI YA ULINZI (PASSWORD PROTECTION) -->
+  <div id="loginOverlay" class="fixed inset-0 z-50 bg-gray-900/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 border border-gray-100 text-center">
       
-      <!-- Gross Sales -->
-      <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-        <div class="flex justify-between items-center text-gray-400 mb-2">
-          <span class="text-xs font-bold uppercase tracking-wider">Jumla ya Mauzo</span>
-          <span class="p-2 rounded-xl bg-blue-50 text-blue-600 text-xs"><i class="fa-solid fa-wallet"></i></span>
-        </div>
-        <h3 class="text-2xl font-black text-gray-900" id="totalGross">TZS 0</h3>
-        <p class="text-[11px] text-gray-400 mt-1" id="totalRidesCount">0 Safari zilizokamilika</p>
+      <div class="w-16 h-16 rounded-2xl bg-purple-100 text-purple-700 mx-auto mb-4 flex items-center justify-center text-3xl shadow-inner">
+        🛡️
       </div>
 
-      <!-- Company 15% Commission -->
-      <div class="bg-gradient-to-br from-purple-500 to-indigo-600 p-5 rounded-3xl text-white shadow-lg shadow-purple-500/20">
-        <div class="flex justify-between items-center text-purple-100 mb-2">
-          <span class="text-xs font-extrabold uppercase tracking-wider">Faida ya Kampuni (15%)</span>
-          <span class="p-2 rounded-xl bg-white/20 text-white text-xs"><i class="fa-solid fa-crown"></i></span>
-        </div>
-        <h3 class="text-2xl font-black text-white" id="companyProfit">TZS 0</h3>
-        <p class="text-[11px] text-purple-100 mt-1">Kamisheni Yako ya Moja kwa Moja</p>
-      </div>
+      <h2 class="text-2xl font-black text-gray-900 mb-1">Msimamizi wa Bolt</h2>
+      <p class="text-xs text-gray-400 mb-6">Weka nenosiri la siri ili kuona mapato na takwimu za kampuni</p>
 
-      <!-- Drivers 85% Payout -->
-      <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-        <div class="flex justify-between items-center text-gray-400 mb-2">
-          <span class="text-xs font-bold uppercase tracking-wider">Madereva (85%)</span>
-          <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600 text-xs"><i class="fa-solid fa-car"></i></span>
+      <form onsubmit="handleAdminLogin(event)" class="space-y-4 text-left">
+        <div>
+          <label class="text-xs font-bold text-gray-700 block mb-1">Jina la Mtumiaji (Username):</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-3.5 text-gray-400 text-sm"><i class="fa-solid fa-user"></i></span>
+            <input type="text" id="adminUsernameInput" value="admin" required
+              class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-bold text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none" />
+          </div>
         </div>
-        <h3 class="text-2xl font-black text-gray-900" id="driversNet">TZS 0</h3>
-        <p class="text-[11px] text-emerald-600 font-bold mt-1">Fedha Walizochukua Madereva</p>
-      </div>
 
-      <!-- Active Drivers Online -->
-      <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-        <div class="flex justify-between items-center text-gray-400 mb-2">
-          <span class="text-xs font-bold uppercase tracking-wider">Madereva Hewani</span>
-          <span class="p-2 rounded-xl bg-amber-50 text-amber-600 text-xs"><i class="fa-solid fa-signal"></i></span>
+        <div>
+          <label class="text-xs font-bold text-gray-700 block mb-1">Nenosiri la Msimamizi (Password):</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-3.5 text-gray-400 text-sm"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="adminPasswordInput" placeholder="Weka nenosiri..." required
+              class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-bold text-gray-900 focus:ring-2 focus:ring-purple-500 outline-none" />
+          </div>
         </div>
-        <h3 class="text-2xl font-black text-gray-900" id="onlineDrivers">2 Dereva</h3>
-        <p class="text-[11px] text-gray-400 mt-1">Wako tayari kupokea oda sasa</p>
-      </div>
 
+        <div id="loginErrorMsg" class="text-xs text-rose-600 font-bold hidden text-center"></div>
+
+        <button type="submit" id="loginBtn" class="w-full py-3.5 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-sm shadow-lg shadow-purple-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <span>Ingia kwenye Mfumo</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </form>
+
+      <div class="mt-6 pt-4 border-t border-gray-100 flex justify-center gap-4 text-xs text-gray-400">
+        <a href="/" class="hover:text-gray-600">← Rudi kwenye App ya Abiria</a>
+      </div>
     </div>
+  </div>
 
-    <!-- LIVE FLEET MAP & DRIVERS LIST -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- Live Map (2 columns) -->
-      <div class="lg:col-span-2 bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
+  <!-- 2. DASHIBODI KUU YA MSIMAMIZI (ADMIN DASHBOARD) -->
+  <div id="adminMainContent" class="hidden">
+    
+    <!-- TOP HEADER -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 px-6 py-4 flex justify-between items-center shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-purple-600/30">
+          👑
+        </div>
+        <div>
+          <h1 class="text-xl font-black text-gray-900 tracking-tight">Bolt <span class="text-purple-600">Admin Portal</span></h1>
+          <p class="text-xs text-gray-400">Usimamizi wa Biashara na Faida ya Kamisheni (15%)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="loadAdminData()" class="px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrows-rotate"></i> Sasisha Data
+        </button>
+
+        <a href="/" class="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-user"></i> Abiria
+        </a>
+
+        <a href="/driver" class="px-3.5 py-2 rounded-xl bg-gray-900 text-white hover:bg-black text-xs font-bold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-car"></i> Dereva
+        </a>
+
+        <!-- Logout Button -->
+        <button onclick="adminLogout()" class="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition flex items-center gap-1.5" title="Funga Mfumo">
+          <i class="fa-solid fa-right-from-bracket"></i> Toka (Lock)
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN BODY -->
+    <main class="max-w-7xl mx-auto p-6 space-y-6">
+
+      <!-- KPI STATS CARDS -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <!-- Gross Sales -->
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+          <div class="flex justify-between items-center text-gray-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider">Jumla ya Mauzo</span>
+            <span class="p-2 rounded-xl bg-blue-50 text-blue-600 text-xs"><i class="fa-solid fa-wallet"></i></span>
+          </div>
+          <h3 class="text-2xl font-black text-gray-900" id="totalGross">TZS 0</h3>
+          <p class="text-[11px] text-gray-400 mt-1" id="totalRidesCount">0 Safari zilizokamilika</p>
+        </div>
+
+        <!-- Company 15% Commission -->
+        <div class="bg-gradient-to-br from-purple-500 to-indigo-600 p-5 rounded-3xl text-white shadow-lg shadow-purple-500/20">
+          <div class="flex justify-between items-center text-purple-100 mb-2">
+            <span class="text-xs font-extrabold uppercase tracking-wider">Faida ya Kampuni (15%)</span>
+            <span class="p-2 rounded-xl bg-white/20 text-white text-xs"><i class="fa-solid fa-crown"></i></span>
+          </div>
+          <h3 class="text-2xl font-black text-white" id="companyProfit">TZS 0</h3>
+          <p class="text-[11px] text-purple-100 mt-1">Kamisheni Yako ya Moja kwa Moja</p>
+        </div>
+
+        <!-- Drivers 85% Payout -->
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+          <div class="flex justify-between items-center text-gray-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider">Madereva (85%)</span>
+            <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600 text-xs"><i class="fa-solid fa-car"></i></span>
+          </div>
+          <h3 class="text-2xl font-black text-gray-900" id="driversNet">TZS 0</h3>
+          <p class="text-[11px] text-emerald-600 font-bold mt-1">Fedha Walizochukua Madereva</p>
+        </div>
+
+        <!-- Active Drivers Online -->
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+          <div class="flex justify-between items-center text-gray-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider">Madereva Hewani</span>
+            <span class="p-2 rounded-xl bg-amber-50 text-amber-600 text-xs"><i class="fa-solid fa-signal"></i></span>
+          </div>
+          <h3 class="text-2xl font-black text-gray-900" id="onlineDrivers">2 Dereva</h3>
+          <p class="text-[11px] text-gray-400 mt-1">Wako tayari kupokea oda sasa</p>
+        </div>
+
+      </div>
+
+      <!-- LIVE FLEET MAP & DRIVERS LIST -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Live Map (2 columns) -->
+        <div class="lg:col-span-2 bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h3 class="font-extrabold text-gray-900 text-base">Ramani ya Madereva Moja kwa Moja</h3>
+              <p class="text-xs text-gray-400">Magari yaliyo hewani ndani ya Dar es Salaam</p>
+            </div>
+            <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live Fleet
+            </span>
+          </div>
+          <div id="fleetMap" class="w-full h-80 rounded-2xl overflow-hidden border border-gray-100"></div>
+        </div>
+
+        <!-- Drivers Roster -->
+        <div class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm flex flex-col">
+          <h3 class="font-extrabold text-gray-900 text-base mb-1">Madereva Waliosajiliwa</h3>
+          <p class="text-xs text-gray-400 mb-4">Hali na magari ya madereva</p>
+
+          <div class="space-y-3 overflow-y-auto flex-1 pr-1">
+            <div class="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                  👨🏽‍✈️
+                </div>
+                <div>
+                  <p class="font-bold text-gray-900">Juma Rashid</p>
+                  <p class="text-[10px] text-gray-400">Toyota IST • T 482 DXY</p>
+                </div>
+              </div>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Hewani</span>
+            </div>
+
+            <div class="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                  🛵
+                </div>
+                <div>
+                  <p class="font-bold text-gray-900">Hamisi Selemani</p>
+                  <p class="text-[10px] text-gray-400">Boxer 150 • MC 123 ABC</p>
+                </div>
+              </div>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Hewani</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TRANSACTIONS & COMMISSION LEDGER -->
+      <div class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
         <div class="flex justify-between items-center mb-4">
           <div>
-            <h3 class="font-extrabold text-gray-900 text-base">Ramani ya Madereva Moja kwa Moja</h3>
-            <p class="text-xs text-gray-400">Magari yaliyo hewani ndani ya Dar es Salaam</p>
+            <h3 class="font-extrabold text-gray-900 text-base">Orodha ya Safari & Mgao wa Kamisheni (15%)</h3>
+            <p class="text-xs text-gray-400">Miamala yote iliyorekodiwa kwenye Database</p>
           </div>
-          <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live GPS Tracking
-          </span>
         </div>
-        <div id="fleetMap" class="w-full h-80 rounded-2xl overflow-hidden border border-gray-100"></div>
-      </div>
 
-      <!-- Drivers Roster -->
-      <div class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm flex flex-col">
-        <h3 class="font-extrabold text-gray-900 text-base mb-1">Madereva Waliosajiliwa</h3>
-        <p class="text-xs text-gray-400 mb-4">Hali na magari ya madereva</p>
-
-        <div class="space-y-3 overflow-y-auto flex-1 pr-1">
-          <!-- Driver 1 -->
-          <div class="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between text-xs">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
-                👨🏽‍✈️
-              </div>
-              <div>
-                <p class="font-bold text-gray-900">Juma Rashid</p>
-                <p class="text-[10px] text-gray-400">Toyota IST • T 482 DXY</p>
-              </div>
-            </div>
-            <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Hewani</span>
-          </div>
-
-          <!-- Driver 2 -->
-          <div class="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between text-xs">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
-                🛵
-              </div>
-              <div>
-                <p class="font-bold text-gray-900">Hamisi Selemani</p>
-                <p class="text-[10px] text-gray-400">Boxer 150 • MC 123 ABC</p>
-              </div>
-            </div>
-            <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Hewani</span>
-          </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
+              <tr>
+                <th class="p-3">Tarehe</th>
+                <th class="p-3">Njia (Safari)</th>
+                <th class="p-3">Dereva</th>
+                <th class="p-3">Nauli (Gross)</th>
+                <th class="p-3 text-purple-700">Kamisheni (15%)</th>
+                <th class="p-3 text-emerald-700">Mgao wa Dereva (85%)</th>
+                <th class="p-3">Malipo</th>
+                <th class="p-3">Hadhi</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody" class="divide-y divide-gray-100">
+              <!-- Loaded via JS -->
+            </tbody>
+          </table>
         </div>
       </div>
 
-    </div>
+    </main>
 
-    <!-- TRANSACTIONS & COMMISSION LEDGER -->
-    <div class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
-      <div class="flex justify-between items-center mb-4">
-        <div>
-          <h3 class="font-extrabold text-gray-900 text-base">Orodha ya Safari & Mgao wa Kamisheni</h3>
-          <p class="text-xs text-gray-400">Miamala yote iliyorekodiwa kwenye Database</p>
-        </div>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
-            <tr>
-              <th class="p-3">Tarehe</th>
-              <th class="p-3">Njia (Safari)</th>
-              <th class="p-3">Dereva</th>
-              <th class="p-3">Nauli (Gross)</th>
-              <th class="p-3 text-purple-700">Kamisheni (15%)</th>
-              <th class="p-3 text-emerald-700">Mgao wa Dereva (85%)</th>
-              <th class="p-3">Malipo</th>
-              <th class="p-3">Hadhi</th>
-            </tr>
-          </thead>
-          <tbody id="transactionsTableBody" class="divide-y divide-gray-100">
-            <!-- Data will be loaded via JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </main>
+  </div>
 
   <script>
-    // 1. FLEET MAP
-    const fleetMap = L.map('fleetMap').setView([-6.8163, 39.2803], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(fleetMap);
+    let adminToken = sessionStorage.getItem('bolt_admin_token');
 
-    // Madereva kwenye ramani ya Msimamizi
-    const carIcon = L.divIcon({
-      html: '<div style="font-size: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));">🚗</div>',
-      className: 'admin-car',
-      iconSize: [25, 25]
-    });
-    L.marker([-6.8120, 39.2820], { icon: carIcon }).addTo(fleetMap).bindPopup("<b>Juma Rashid (Toyota IST)</b><br>Hali: Anapatikana");
-    L.marker([-6.8220, 39.2780], { icon: carIcon }).addTo(fleetMap).bindPopup("<b>Hamisi Selemani (Boda)</b><br>Hali: Anapatikana");
+    // 1. ANGALIA KAMA MSIMAMIZI AMESHAINGIA
+    function checkAuth() {
+      if (adminToken) {
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('adminMainContent').classList.remove('hidden');
+        initFleetMap();
+        loadAdminData();
+      } else {
+        document.getElementById('loginOverlay').classList.remove('hidden');
+        document.getElementById('adminMainContent').classList.add('hidden');
+      }
+    }
 
-    // 2. PAKIA DATA ZA MSIMAMIZI KUTOKA KWENYE SEVA
-    async function loadAdminData() {
+    // 2. SHUGHULIKIA KUINGIA (LOGIN)
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('adminUsernameInput').value;
+      const pass = document.getElementById('adminPasswordInput').value;
+      const errorMsg = document.getElementById('loginErrorMsg');
+      const loginBtn = document.getElementById('loginBtn');
+
+      loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inathibitisha...';
+
       try {
-        const res = await fetch('/api/admin/stats');
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, password: pass })
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.token) {
+          adminToken = data.token;
+          sessionStorage.setItem('bolt_admin_token', adminToken);
+          errorMsg.classList.add('hidden');
+          checkAuth();
+        } else {
+          errorMsg.innerText = data.message || "Nenosiri si sahihi!";
+          errorMsg.classList.remove('hidden');
+          loginBtn.innerHTML = 'Ingia kwenye Mfumo <i class="fa-solid fa-arrow-right text-xs"></i>';
+        }
+      } catch (err) {
+        errorMsg.innerText = "Hitilafu ya kuunganisha na seva.";
+        errorMsg.classList.remove('hidden');
+        loginBtn.innerHTML = 'Ingia kwenye Mfumo <i class="fa-solid fa-arrow-right text-xs"></i>';
+      }
+    }
+
+    function adminLogout() {
+      sessionStorage.removeItem('bolt_admin_token');
+      adminToken = null;
+      checkAuth();
+    }
+
+    // 3. FLEET MAP INITIALIZATION
+    let fleetMap = null;
+    function initFleetMap() {
+      if (fleetMap) return;
+      fleetMap = L.map('fleetMap').setView([-6.8163, 39.2803], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(fleetMap);
+
+      const carIcon = L.divIcon({
+        html: '<div style="font-size: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));">🚗</div>',
+        className: 'admin-car',
+        iconSize: [25, 25]
+      });
+      L.marker([-6.8120, 39.2820], { icon: carIcon }).addTo(fleetMap).bindPopup("<b>Juma Rashid (Toyota IST)</b><br>Hali: Anapatikana");
+      L.marker([-6.8220, 39.2780], { icon: carIcon }).addTo(fleetMap).bindPopup("<b>Hamisi Selemani (Boda)</b><br>Hali: Anapatikana");
+    }
+
+    // 4. PAKIA DATA ZA MSIMAMIZI
+    async function loadAdminData() {
+      if (!adminToken) return;
+
+      try {
+        const res = await fetch('/api/admin/stats', {
+          headers: { 'x-admin-token': adminToken }
+        });
         const data = await res.json();
 
         if (data.success) {
@@ -226,14 +342,16 @@
           } else {
             tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-gray-400">Hakuna safari zilizofanyika bado.</td></tr>`;
           }
+        } else if (res.status === 401) {
+          adminLogout();
         }
       } catch (err) {
         console.error("Kosa la kupakia data za admin:", err);
       }
     }
 
-    loadAdminData();
+    // Anzisha ukaguzi mara tu ukurasa unapofunguka
+    checkAuth();
   </script>
 </body>
 </html>
-

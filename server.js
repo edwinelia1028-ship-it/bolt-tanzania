@@ -149,8 +149,36 @@ app.get('/api/places/reverse', async (req, res) => {
   }
 });
 
-// 3. API YA TAKWIMU ZA MSIMAMIZI (Admin Dashboard Stats & 15% Commission)
+// 3. ULINZI WA MSIMAMIZI (Admin Authentication & Password Protection)
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'bolt2026';
+const ADMIN_TOKEN = 'bolt_admin_session_token_2026';
+
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    return res.json({
+      success: true,
+      token: ADMIN_TOKEN,
+      message: "Umefanikiwa kuingia kama Msimamizi!"
+    });
+  }
+  return res.status(401).json({
+    success: false,
+    message: "Jina la mtumiaji au nenosiri si sahihi!"
+  });
+});
+
+// API YA TAKWIMU ZA MSIMAMIZI (Admin Dashboard Stats & 15% Commission)
 app.get('/api/admin/stats', (req, res) => {
+  const token = req.headers['x-admin-token'];
+  if (token !== ADMIN_TOKEN) {
+    return res.status(401).json({
+      success: false,
+      message: "Huna ruhusa ya kuona ukurasa huu. Tafadhali ingiza nenosiri."
+    });
+  }
+
   try {
     const rides = db.getAllRides();
     const payments = db.getAllPayments();
