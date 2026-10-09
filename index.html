@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bolt Tanzania - Agiza Usafiri Popote</title>
   
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bolt TZ">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Leaflet Map CSS & JS -->
@@ -41,16 +47,21 @@
       </span>
     </div>
 
-    <!-- PORTAL SWITCHERS (KURASA 3) -->
+    <!-- PORTAL SWITCHERS & PWA INSTALL -->
     <div class="flex items-center gap-2">
+      <!-- Android/iOS PWA Install Button -->
+      <button id="installAppBtn" onclick="installBoltApp()" class="hidden text-xs font-bold px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition flex items-center gap-1.5 animate-bounce">
+        <i class="fa-solid fa-download"></i> Sakinisha App
+      </button>
+
       <!-- Ride History -->
       <button onclick="openHistoryModal()" class="text-xs font-bold px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition flex items-center gap-1.5">
         <i class="fa-solid fa-clock-rotate-left"></i> Historia
       </button>
 
       <!-- Switch to Driver Portal -->
-      <a href="/driver" class="text-xs font-bold px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm transition flex items-center gap-1.5">
-        <i class="fa-solid fa-car"></i> Dashibodi ya Dereva
+      <a href="/driver" class="text-xs font-bold px-3.5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white shadow-sm transition flex items-center gap-1.5">
+        <i class="fa-solid fa-car"></i> Dereva
       </a>
 
       <!-- Switch to Admin Portal -->
@@ -685,6 +696,37 @@
 
     function closeHistoryModal() {
       document.getElementById('historyModal').classList.add('hidden');
+    }
+
+    // 7. PWA INSTALLATION KWA AJILI YA ANDROID/IOS APP
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('installAppBtn');
+      if (btn) btn.classList.remove('hidden');
+    });
+
+    function installBoltApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choice) => {
+          if (choice.outcome === 'accepted') {
+            console.log('Mtumiaji amekubali kusakinisha app');
+          }
+          deferredPrompt = null;
+          const btn = document.getElementById('installAppBtn');
+          if (btn) btn.classList.add('hidden');
+        });
+      } else {
+        alert("Ili kusakinisha kwenye Android: Bonyeza vidoti 3 (⋮) vya juu kulia kwenye Chrome, kisha bonyeza 'Install App' au 'Add to Home screen'.");
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(e => console.log('SW error:', e));
+      });
     }
   </script>
 </body>

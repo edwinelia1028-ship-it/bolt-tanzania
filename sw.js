@@ -13,3 +13,4 @@ self.addEventListener('fetch', (event) => {
   // Let network handle real-time requests
   event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
+
