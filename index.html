@@ -41,7 +41,10 @@
       <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-black text-xl shadow-md">
         ⚡
       </div>
-      <span class="text-2xl font-black tracking-tight text-gray-900">Bolt</span>
+      <div>
+        <span class="text-2xl font-black tracking-tight text-gray-900">Eddie <span class="text-emerald-600">Ride</span></span>
+        <span class="text-[10px] text-gray-400 block -mt-1 font-semibold">Tanzania</span>
+      </div>
       <span id="serverStatus" class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 ml-2">
         <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Online
       </span>
@@ -49,9 +52,14 @@
 
     <!-- PORTAL SWITCHERS & PWA INSTALL -->
     <div class="flex items-center gap-2">
+      <!-- WhatsApp Support Quick Link -->
+      <a href="https://wa.me/255626198847?text=Habari%20Eddie%20Ride,%20nahitaji%20msaada" target="_blank" class="text-xs font-bold px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition flex items-center gap-1.5" title="Msaada WhatsApp: 0626198847">
+        <i class="fa-brands fa-whatsapp text-emerald-600 text-sm"></i> <span class="hidden sm:inline">0626198847</span>
+      </a>
+
       <!-- Android/iOS PWA Install Button -->
       <button id="installAppBtn" onclick="installBoltApp()" class="hidden text-xs font-bold px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition flex items-center gap-1.5 animate-bounce">
-        <i class="fa-solid fa-download"></i> Sakinisha App
+        <i class="fa-solid fa-download"></i> Sakinisha
       </button>
 
       <!-- Ride History -->
@@ -331,6 +339,25 @@
     </div>
   </div>
 
+  <!-- FLOATING WHATSAPP BUTTON (EDDIE RIDE SUPPORT) -->
+  <a href="https://wa.me/255626198847?text=Habari%20Eddie%20Ride,%20nahitaji%20msaada%20wa%20huduma" target="_blank" 
+     class="fixed bottom-6 right-6 z-40 bg-[#25D366] hover:bg-[#20ba5a] text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2.5 font-bold text-xs transition transform hover:scale-105 border-2 border-white">
+    <i class="fa-brands fa-whatsapp text-xl"></i>
+    <span>Msaada (0626198847)</span>
+  </a>
+
+  <!-- SMS TOAST BANNER (INAIGA KUTUMWA KWA SMS KWENYE SIMU) -->
+  <div id="smsNotificationToast" class="hidden fixed top-16 right-5 z-50 bg-gray-900/95 text-white p-4 rounded-2xl shadow-2xl border border-emerald-500/50 max-w-sm animate-bounce">
+    <div class="flex items-center justify-between gap-2 mb-1">
+      <div class="flex items-center gap-1.5">
+        <i class="fa-solid fa-comment-sms text-emerald-400"></i>
+        <span class="text-xs font-black text-emerald-400">Eddie Ride SMS</span>
+      </div>
+      <span class="text-[10px] text-gray-400">Sasa Hivi</span>
+    </div>
+    <p class="text-xs text-gray-200" id="smsToastContent"></p>
+  </div>
+
   <!-- RIDE HISTORY MODAL -->
   <div id="historyModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 max-h-[85vh] flex flex-col">
@@ -594,8 +621,17 @@
     });
 
     socket.on('passenger:ride_completed', () => {
-      alert("🎉 Dereva amekamilisha safari! Asante kwa kusafiri na Bolt.");
+      alert("🎉 Dereva amekamilisha safari! Asante kwa kusafiri na Eddie Ride.");
       cancelSearch();
+    });
+
+    // Mpokeo wa SMS Notifications kutoka Seva
+    socket.on('passenger:sms_alert', (data) => {
+      const toast = document.getElementById('smsNotificationToast');
+      const content = document.getElementById('smsToastContent');
+      content.innerText = data.message;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 9000);
     });
 
     // 5. MALIPO YA STK PUSH

@@ -1,7 +1,7 @@
 {
-  "name": "Bolt Tanzania - Usafiri Popote",
-  "short_name": "Bolt TZ",
-  "description": "App ya kuagiza usafiri wa Boda, Bajaj na Magari nchini Tanzania",
+  "name": "Eddie Ride - Usafiri Popote Tanzania",
+  "short_name": "Eddie Ride",
+  "description": "App ya kuagiza usafiri wa Boda, Bajaj na Magari nchini Tanzania kwa urahisi na unafuu",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -22,4 +22,3 @@
     }
   ]
 }
-

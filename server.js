@@ -8,6 +8,8 @@ const bcrypt = require('bcryptjs');
 
 // Hifadhidata ya Kudumu ya Ndani (Local Persistent DB)
 const db = require('./db');
+// Mfumo wa SMS Notifications
+const sms = require('./sms');
 
 const app = express();
 const server = http.createServer(app);
@@ -332,6 +334,9 @@ app.post('/api/payments/stk-push', (req, res) => {
 
     db.addPayment(paymentRecord);
 
+    // Tuma SMS ya Risiti kwenye simu ya mteja
+    sms.notifyPaymentReceipt(cleanPhone, amount, provider, txId);
+
     res.json({
       success: true,
       transactionId: txId,
@@ -346,6 +351,11 @@ app.post('/api/payments/stk-push', (req, res) => {
 app.get('/api/drivers/available', (req, res) => {
   const available = Object.values(drivers).filter(d => d.isOnline && !d.isBusy);
   res.json({ success: true, count: available.length, drivers: available });
+});
+
+// 9. API ya Kusoma Ripoti za SMS
+app.get('/api/sms/logs', (req, res) => {
+  res.json({ success: true, logs: sms.getSMSLogs() });
 });
 
 // ==========================================
@@ -410,6 +420,9 @@ io.on('connection', (socket) => {
       }
     }
 
+    // Tuma SMS kwa dereva aliye karibu
+    sms.notifyDriverNewRide(nearestDriver?.phone || "0626198847", newRide.pickup.address || "Posta", newRide.destination.address || "Mlimani City", newRide.fare);
+
     if (nearestDriver && nearestDriver.socketId) {
       io.to(nearestDriver.socketId).emit('driver:incoming_ride', {
         rideId: rideId,
@@ -438,6 +451,10 @@ io.on('connection', (socket) => {
       driver.isBusy = true;
       driver.activeRideId = rideId;
 
+      // Tuma SMS kwa simu ya abiria
+      const smsText = `HABARI: Dereva wako wa Eddie Ride, ${driver.name} (${driver.vehicle} - ${driver.plate}) anakufuata sasa. Nauli: TZS ${Number(ride.fare).toLocaleString()}. Msaada: 0626198847.`;
+      sms.notifyPassengerRideAccepted("0626198847", driver.name, driver.vehicle, driver.plate, ride.fare);
+
       io.to(ride.passengerSocketId).emit('passenger:ride_accepted', {
         rideId: rideId,
         driver: {
@@ -450,6 +467,9 @@ io.on('connection', (socket) => {
         },
         fare: ride.fare
       });
+
+      // Tuma arifa ya SMS kwa abiria
+      io.to(ride.passengerSocketId).emit('passenger:sms_alert', { message: smsText });
 
       socket.emit('driver:ride_confirmed', { ride });
     }
