@@ -73,7 +73,8 @@ async function sendSMS(toPhone, message) {
       if (gatewayResponse && (gatewayResponse.code === 100 || gatewayResponse.successful)) {
         deliveryStatus = "DELIVERED (BEEM SMS)";
       } else {
-        deliveryStatus = `BEEM: ${gatewayResponse.message || 'Angalia Salio'}`;
+        const errDetail = gatewayResponse?.data?.message || gatewayResponse?.message || 'Angalia Salio au Sender ID';
+        deliveryStatus = `BEEM: ${errDetail}`;
       }
     } catch (apiError) {
       console.error(`❌ [BEEM AFRICA ERROR]:`, apiError.message);
@@ -124,11 +125,12 @@ async function getBeemBalance() {
       }
     });
     const data = await response.json();
+    const bal = data.data?.credit_balance ?? data.data?.credit_bal ?? "0";
     return {
       configured: true,
       success: true,
-      balance: data.data?.credit_bal || "0",
-      currency: "TZS / SMS Credits"
+      balance: bal,
+      currency: "SMS Credits"
     };
   } catch (err) {
     return {
