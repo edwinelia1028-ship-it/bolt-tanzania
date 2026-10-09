@@ -63,3 +63,4 @@ module.exports = {
   SUPPORT_PHONE,
   BRAND_NAME
 };
+

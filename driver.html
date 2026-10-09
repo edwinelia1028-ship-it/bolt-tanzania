@@ -46,7 +46,7 @@
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Uko Hewani
           </span>
         </div>
-        <p class="text-[11px] text-gray-400 font-medium">Juma Rashid • Toyota IST (T 482 DXY)</p>
+        <p id="driverProfileLabel" class="text-[11px] text-gray-400 font-medium">Juma Rashid • Toyota IST (T 482 DXY)</p>
       </div>
     </div>
 
@@ -55,6 +55,11 @@
       <button onclick="toggleOnlineStatus()" id="statusToggleBtn" class="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition flex items-center gap-1.5">
         <i class="fa-solid fa-power-off"></i> <span id="statusToggleText">Zima (Go Offline)</span>
       </button>
+
+      <!-- Badili Dereva / Jisajili -->
+      <a href="/register#driver" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold transition flex items-center gap-1.5" title="Badili Dereva au Jisajili Mpya">
+        <i class="fa-solid fa-user-plus text-emerald-400"></i> <span class="hidden sm:inline">Akaunti</span>
+      </a>
 
       <!-- Kiungo cha kurudi kwenye App ya Abiria -->
       <a href="/" class="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold transition flex items-center gap-1" title="Fungua App ya Abiria">
@@ -202,7 +207,37 @@
       }
     }
 
-    // 3. UNGANISHA NA SEVA KUPITIA SOCKET.IO
+    // 3. TAFUTA TAARIFA ZA DEREVA ALIYELOGIN (LOCALSTORAGE)
+    let currentDriver = {
+      id: "drv_101",
+      name: "Juma Rashid",
+      vehicle: "Toyota IST (Nyeupe)",
+      plate: "T 482 DXY",
+      type: "standard"
+    };
+
+    try {
+      const stored = localStorage.getItem('eddie_current_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (u.role === 'driver') {
+          currentDriver.id = u.id || currentDriver.id;
+          currentDriver.name = u.name || currentDriver.name;
+          if (u.driverDetails) {
+            currentDriver.vehicle = u.driverDetails.vehicle || currentDriver.vehicle;
+            currentDriver.plate = u.driverDetails.plate || currentDriver.plate;
+            currentDriver.type = u.driverDetails.type || currentDriver.type;
+          }
+          // Sasisha jina na chombo kwenye mwonekano wa juu
+          const label = document.getElementById('driverProfileLabel');
+          if (label) label.innerText = `${currentDriver.name} • ${currentDriver.vehicle} (${currentDriver.plate})`;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to parse driver profile:", e);
+    }
+
+    // 4. UNGANISHA NA SEVA KUPITIA SOCKET.IO
     const socket = io();
     let isOnline = true;
     let currentRideId = null;
@@ -216,8 +251,11 @@
     function registerAsDriver() {
       if (isOnline) {
         socket.emit('driver:online', {
-          id: "drv_101",
-          name: "Juma Rashid",
+          id: currentDriver.id,
+          name: currentDriver.name,
+          vehicle: currentDriver.vehicle,
+          plate: currentDriver.plate,
+          type: currentDriver.type,
           location: { lat: driverPos[0], lng: driverPos[1] }
         });
       }
@@ -263,7 +301,7 @@
     function acceptOrder() {
       socket.emit('driver:accept_ride', {
         rideId: currentRideId,
-        driverId: "drv_101"
+        driverId: currentDriver.id
       });
 
       document.getElementById('incomingOrderModal').classList.add('hidden');
@@ -284,7 +322,7 @@
         map.panTo(driverPos);
 
         socket.emit('driver:update_location', {
-          driverId: 'drv_101',
+          driverId: currentDriver.id,
           location: { lat: driverPos[0], lng: driverPos[1] }
         });
 

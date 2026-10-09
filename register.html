@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#064e3b">
+  <title>Eddie Ride - Kuingia & Usajili (Dereva na Admin)</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 min-h-screen text-gray-100 font-sans flex flex-col justify-between p-4 sm:p-6">
+
+  <!-- TOP HEADER -->
+  <header class="max-w-4xl w-full mx-auto flex items-center justify-between py-3">
+    <a href="/" class="flex items-center gap-2.5">
+      <div class="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-500/30">
+        ⚡
+      </div>
+      <div>
+        <h1 class="text-xl font-black text-white tracking-tight">Eddie <span class="text-emerald-400">Ride</span></h1>
+        <p class="text-[10px] text-gray-400">Usafiri wa Haraka na Salama Tanzania</p>
+      </div>
+    </a>
+
+    <div class="flex items-center gap-3 text-xs font-bold">
+      <a href="/" class="px-3.5 py-2 rounded-xl bg-gray-800/80 hover:bg-gray-800 text-gray-300 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-left"></i> <span class="hidden sm:inline">Rudi</span> Nyumbani
+      </a>
+      <a href="https://wa.me/255626198847" target="_blank" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md shadow-emerald-600/30">
+        <i class="fa-brands fa-whatsapp text-sm"></i> <span class="hidden sm:inline">0626198847</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- MAIN CARD -->
+  <main class="max-w-xl w-full mx-auto my-6 bg-gray-900/90 backdrop-blur-xl border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+    
+    <!-- Glow decorative backdrop -->
+    <div class="absolute -top-24 -right-24 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-60 h-60 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- MAIN ROLE TABS -->
+    <div class="relative z-10 mb-6">
+      <div class="grid grid-cols-3 p-1.5 bg-gray-800/90 rounded-2xl border border-gray-700/60 text-xs font-extrabold text-center">
+        <button type="button" onclick="switchRoleTab('driver')" id="tabBtn-driver" class="py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 bg-emerald-500 text-white shadow-md">
+          <i class="fa-solid fa-car"></i> <span>Dereva</span>
+        </button>
+        <button type="button" onclick="switchRoleTab('admin')" id="tabBtn-admin" class="py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 text-gray-400 hover:text-white">
+          <i class="fa-solid fa-crown text-purple-400"></i> <span>Msimamizi (Admin)</span>
+        </button>
+        <button type="button" onclick="switchRoleTab('passenger')" id="tabBtn-passenger" class="py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 text-gray-400 hover:text-white">
+          <i class="fa-solid fa-user"></i> <span>Abiria</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- NOTIFICATION ALERT BOX -->
+    <div id="statusAlert" class="hidden mb-5 p-3.5 rounded-2xl text-xs font-bold transition flex items-center gap-2"></div>
+
+    <!-- ========================================== -->
+    <!-- 1. DEREVA SECTION (DRIVER REGISTRATION & LOGIN) -->
+    <!-- ========================================== -->
+    <div id="driverSection" class="space-y-5">
+      <div class="flex justify-between items-center pb-3 border-b border-gray-800">
+        <div>
+          <h2 class="text-lg font-black text-white flex items-center gap-2">
+            <span>🚖 Lango la Dereva</span>
+          </h2>
+          <p class="text-xs text-gray-400">Ingia au jisajili ili uanze kuona na kupokea maombi ya safari za abiria</p>
+        </div>
+        
+        <!-- Sub-switch: Jisajili / Ingia -->
+        <div class="flex bg-gray-800 rounded-xl p-1 text-[11px] font-bold">
+          <button type="button" onclick="switchDriverMode('register')" id="driverModeRegBtn" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-white transition">Jisajili</button>
+          <button type="button" onclick="switchDriverMode('login')" id="driverModeLogBtn" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition">Ingia</button>
+        </div>
+      </div>
+
+      <!-- A. FOMU YA USAJILI WA DEREVA (REGISTER) -->
+      <form id="driverRegisterForm" onsubmit="handleDriverRegister(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-300 mb-1">Jina Kamili la Dereva:</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-user"></i></span>
+            <input type="text" id="driverRegName" required placeholder="mf. Juma Rashid"
+              class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-300 mb-1">Namba ya Simu (M-Pesa/Tigo):</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-phone"></i></span>
+              <input type="tel" id="driverRegPhone" required placeholder="07... au 06..."
+                class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-300 mb-1">Aina ya Chombo:</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-list"></i></span>
+              <select id="driverRegType" required
+                class="w-full bg-gray-800 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                <option value="standard">🚗 Gari ya Kawaida (Standard)</option>
+                <option value="boda">🛵 Boda Boda (Pikipiki)</option>
+                <option value="bajaj">🛺 Bajaj (Magurudumu 3)</option>
+                <option value="xl">🚙 Gari Kubwa (XL / Noah / SUV)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-300 mb-1">Muundo wa Chombo / Gari:</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-car-side"></i></span>
+              <input type="text" id="driverRegVehicle" required placeholder="mf. Toyota IST Nyeupe / Boxer"
+                class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-300 mb-1">Namba ya Bamba (Plate Number):</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-id-card"></i></span>
+              <input type="text" id="driverRegPlate" required placeholder="mf. T 482 DXY"
+                class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 uppercase" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-300 mb-1">Weka Nenosiri la Siri (Password):</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="driverRegPassword" required placeholder="Nenosiri la akaunti yako..."
+              class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+          </div>
+        </div>
+
+        <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[11px] text-emerald-300 flex items-center gap-2">
+          <i class="fa-solid fa-percent text-base text-emerald-400"></i>
+          <span><strong>85% ya mapato ni yako!</strong> Eddie Ride inachukua kamisheni ndogo ya 15% pekee kwa kila safari unayokamilisha.</span>
+        </div>
+
+        <button type="submit" id="driverRegSubmitBtn"
+          class="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check"></i> Jisajili & Fungua Dashibodi ya Dereva
+        </button>
+      </form>
+
+      <!-- B. FOMU YA KUINGIA KWA DEREVA (LOGIN) -->
+      <form id="driverLoginForm" onsubmit="handleDriverLogin(event)" class="space-y-4 hidden">
+        <div>
+          <label class="block text-xs font-bold text-gray-300 mb-1">Namba Yako ya Simu:</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-phone"></i></span>
+            <input type="tel" id="driverLogPhone" required placeholder="07... au 06..."
+              class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-300 mb-1">Nenosiri (Password):</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="driverLogPassword" required placeholder="Weka nenosiri lako..."
+              class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+          </div>
+        </div>
+
+        <button type="submit" id="driverLogSubmitBtn"
+          class="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-right-to-bracket"></i> Ingia kwenye Dashibodi ya Dereva
+        </button>
+
+        <p class="text-center text-xs text-gray-400">
+          Huna akaunti ya dereva bado? 
+          <button type="button" onclick="switchDriverMode('register')" class="text-emerald-400 font-bold hover:underline">Jisajili hapa</button>
+        </p>
+      </form>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. ADMIN SECTION (MSIMAMIZI) -->
+    <!-- ========================================== -->
+    <div id="adminSection" class="space-y-5 hidden">
+      <div class="pb-3 border-b border-gray-800">
+        <h2 class="text-lg font-black text-white flex items-center gap-2">
+          <span>👑 Lango la Msimamizi wa Mfumo (Admin Portal)</span>
+        </h2>
+        <p class="text-xs text-gray-400">Tazama maombi ya abiria moja kwa moja, magari yaliyo hewani na mapato ya 15%</p>
+      </div>
+
+      <div class="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl text-xs text-purple-200 space-y-1">
+        <p class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-purple-400"></i> Usimamizi Mkuu wa Eddie Ride</p>
+        <p class="text-[11px] text-gray-300">Weka jina la mtumiaji na nenosiri la siri kuona takwimu zote za biashara.</p>
+      </div>
+
+      <form onsubmit="handleAdminAuth(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-300 mb-1">Jina la Mtumiaji (Username):</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-user-shield"></i></span>
+            <input type="text" id="adminUserField" value="admin" required
+              class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-300 mb-1">Nenosiri la Msimamizi (Password):</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="adminPassField" value="bolt2026" required placeholder="Weka nenosiri..."
+              class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500" />
+          </div>
+        </div>
+
+        <button type="submit" id="adminSubmitBtn"
+          class="w-full py-3.5 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-lg shadow-purple-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-shield-halved"></i> Ingia kwenye Dashibodi ya Msimamizi
+        </button>
+      </form>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. ABIRIA SECTION (PASSENGER) -->
+    <!-- ========================================== -->
+    <div id="passengerSection" class="space-y-5 hidden">
+      <div class="pb-3 border-b border-gray-800">
+        <h2 class="text-lg font-black text-white flex items-center gap-2">
+          <span>👤 Lango la Abiria (Passenger)</span>
+        </h2>
+        <p class="text-xs text-gray-400">Jisajili au ingia ili uweze kuagiza safari na kuona madereva walio karibu</p>
+      </div>
+
+      <form onsubmit="handlePassengerRegister(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-300 mb-1">Jina Lako Kamili:</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-user"></i></span>
+            <input type="text" id="passengerName" required placeholder="mf. Amina Bakari"
+              class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-300 mb-1">Namba ya Simu:</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-phone"></i></span>
+            <input type="tel" id="passengerPhone" required placeholder="07... au 06..."
+              class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-300 mb-1">Nenosiri (Password):</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-3 text-gray-500 text-sm"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" id="passengerPassword" required placeholder="Weka nenosiri..."
+              class="w-full bg-gray-800/80 border border-gray-700 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+
+        <button type="submit" id="passengerSubmitBtn"
+          class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-lg shadow-blue-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-location-arrow"></i> Fungua App & Agiza Safari Sasa
+        </button>
+
+        <div class="pt-2 text-center">
+          <a href="/" class="text-xs text-gray-400 hover:text-emerald-400 transition underline">
+            Au nenda moja kwa moja kwenye Ramani ya Abiria bila kuingia →
+          </a>
+        </div>
+      </form>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="max-w-4xl w-full mx-auto text-center py-4 text-xs text-gray-500 border-t border-gray-800/60">
+    <p>© 2026 <strong>Eddie Ride</strong> • Huduma na Msaada: WhatsApp <a href="https://wa.me/255626198847" class="text-emerald-400 hover:underline">0626198847</a></p>
+  </footer>
+
+  <script>
+    // 1. SWITCHING ROLES (DRIVER / ADMIN / PASSENGER)
+    function switchRoleTab(role) {
+      const tabs = ['driver', 'admin', 'passenger'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tabBtn-${t}`);
+        const sec = document.getElementById(`${t}Section`);
+        if (t === role) {
+          sec.classList.remove('hidden');
+          btn.className = `py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 ${
+            role === 'driver' ? 'bg-emerald-500 text-white shadow-md' :
+            role === 'admin' ? 'bg-purple-600 text-white shadow-md' :
+            'bg-blue-600 text-white shadow-md'
+          }`;
+        } else {
+          sec.classList.add('hidden');
+          btn.className = "py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 text-gray-400 hover:text-white";
+        }
+      });
+      hideAlert();
+    }
+
+    // 2. SWITCHING DRIVER MODE (REGISTER / LOGIN)
+    function switchDriverMode(mode) {
+      const regForm = document.getElementById('driverRegisterForm');
+      const logForm = document.getElementById('driverLoginForm');
+      const regBtn = document.getElementById('driverModeRegBtn');
+      const logBtn = document.getElementById('driverModeLogBtn');
+
+      if (mode === 'register') {
+        regForm.classList.remove('hidden');
+        logForm.classList.add('hidden');
+        regBtn.className = "px-2.5 py-1 rounded-lg bg-emerald-500 text-white transition";
+        logBtn.className = "px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition";
+      } else {
+        regForm.classList.add('hidden');
+        logForm.classList.remove('hidden');
+        regBtn.className = "px-2.5 py-1 rounded-lg text-gray-400 hover:text-white transition";
+        logBtn.className = "px-2.5 py-1 rounded-lg bg-emerald-500 text-white transition";
+      }
+      hideAlert();
+    }
+
+    function showAlert(text, isSuccess) {
+      const el = document.getElementById('statusAlert');
+      el.className = `mb-5 p-3.5 rounded-2xl text-xs font-bold transition flex items-center gap-2 ${
+        isSuccess ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+      }`;
+      el.innerHTML = `<i class="fa-solid ${isSuccess ? 'fa-circle-check text-emerald-400' : 'fa-circle-exclamation text-rose-400'}"></i> <span>${text}</span>`;
+      el.classList.remove('hidden');
+    }
+
+    function hideAlert() {
+      document.getElementById('statusAlert').classList.add('hidden');
+    }
+
+    // 3. USAJILI WA DEREVA (DRIVER REGISTER)
+    async function handleDriverRegister(e) {
+      e.preventDefault();
+      const btn = document.getElementById('driverRegSubmitBtn');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inasajili dereva...';
+      btn.disabled = true;
+
+      const payload = {
+        name: document.getElementById('driverRegName').value.trim(),
+        phone: document.getElementById('driverRegPhone').value.trim(),
+        role: 'driver',
+        password: document.getElementById('driverRegPassword').value,
+        vehicleDetails: {
+          type: document.getElementById('driverRegType').value,
+          vehicle: document.getElementById('driverRegVehicle').value.trim(),
+          plate: document.getElementById('driverRegPlate').value.trim().toUpperCase()
+        }
+      };
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert("🎉 Umesajiliwa kikamilifu kama Dereva! Inaelekea kwenye dashibodi...", true);
+          localStorage.setItem('eddie_current_user', JSON.stringify(data.user));
+          setTimeout(() => {
+            window.location.href = '/driver';
+          }, 1200);
+        } else {
+          showAlert(data.message || "Hitilafu ya kusajili dereva", false);
+          btn.innerHTML = '<i class="fa-solid fa-check"></i> Jisajili & Fungua Dashibodi ya Dereva';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        showAlert("Hitilafu ya kuwasiliana na seva.", false);
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Jisajili & Fungua Dashibodi ya Dereva';
+        btn.disabled = false;
+      }
+    }
+
+    // 4. KUINGIA KWA DEREVA (DRIVER LOGIN)
+    async function handleDriverLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('driverLogSubmitBtn');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inaingia...';
+      btn.disabled = true;
+
+      const phone = document.getElementById('driverLogPhone').value.trim();
+      const password = document.getElementById('driverLogPassword').value;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, password })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert("🎉 Karibu tena dereva! Inaelekea kwenye dashibodi...", true);
+          localStorage.setItem('eddie_current_user', JSON.stringify(data.user));
+          setTimeout(() => {
+            window.location.href = '/driver';
+          }, 1000);
+        } else {
+          showAlert(data.message || "Namba ya simu au nenosiri si sahihi", false);
+          btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Ingia kwenye Dashibodi ya Dereva';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        showAlert("Hitilafu ya kuwasiliana na seva.", false);
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Ingia kwenye Dashibodi ya Dereva';
+        btn.disabled = false;
+      }
+    }
+
+    // 5. KUINGIA KWA MSIMAMIZI (ADMIN AUTH)
+    async function handleAdminAuth(e) {
+      e.preventDefault();
+      const btn = document.getElementById('adminSubmitBtn');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inathibitisha Msimamizi...';
+      btn.disabled = true;
+
+      const username = document.getElementById('adminUserField').value.trim();
+      const password = document.getElementById('adminPassField').value;
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (data.success && data.token) {
+          showAlert("👑 Umethibitishwa kama Msimamizi! Inafungua Dashibodi Kuu...", true);
+          sessionStorage.setItem('bolt_admin_token', data.token);
+          setTimeout(() => {
+            window.location.href = '/admin';
+          }, 1000);
+        } else {
+          showAlert(data.message || "Nenosiri la Msimamizi si sahihi", false);
+          btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Ingia kwenye Dashibodi ya Msimamizi';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        showAlert("Hitilafu ya kuwasiliana na seva.", false);
+        btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Ingia kwenye Dashibodi ya Msimamizi';
+        btn.disabled = false;
+      }
+    }
+
+    // 6. USAJILI WA ABIRIA (PASSENGER REGISTER)
+    async function handlePassengerRegister(e) {
+      e.preventDefault();
+      const btn = document.getElementById('passengerSubmitBtn');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inasajili...';
+      btn.disabled = true;
+
+      const payload = {
+        name: document.getElementById('passengerName').value.trim(),
+        phone: document.getElementById('passengerPhone').value.trim(),
+        role: 'passenger',
+        password: document.getElementById('passengerPassword').value
+      };
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showAlert("🎉 Karibu Eddie Ride! Inaelekea kwenye ukurasa wa safari...", true);
+          localStorage.setItem('eddie_current_user', JSON.stringify(data.user));
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+        } else {
+          showAlert(data.message || "Hitilafu ya kusajili abiria", false);
+          btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> Fungua App & Agiza Safari Sasa';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        showAlert("Hitilafu ya kuwasiliana na seva.", false);
+        btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> Fungua App & Agiza Safari Sasa';
+        btn.disabled = false;
+      }
+    }
+
+    // Kama URL ina hash k.m. #admin au #driver
+    if (window.location.hash === '#admin') {
+      switchRoleTab('admin');
+    } else if (window.location.hash === '#passenger') {
+      switchRoleTab('passenger');
+    }
+  </script>
+</body>
+</html>

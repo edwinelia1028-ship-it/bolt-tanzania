@@ -10,6 +10,8 @@
   <!-- Leaflet Map CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Socket.io Client -->
+  <script src="/socket.io/socket.io.js"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
@@ -77,6 +79,10 @@
       <div class="flex items-center flex-wrap gap-2.5">
         <a href="https://wa.me/255626198847" target="_blank" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-emerald-600/30">
           <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp (0626198847)
+        </a>
+
+        <a href="/register#driver" class="px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold transition flex items-center gap-1.5" title="Sajili Dereva Mpya">
+          <i class="fa-solid fa-user-plus text-purple-600"></i> Sajili Dereva
         </a>
 
         <button onclick="loadAdminData()" class="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition flex items-center gap-1.5">
@@ -199,6 +205,44 @@
 
       </div>
 
+      <!-- MAOMBI YA ABIRIA YA MOJA KWA MOJA (LIVE PASSENGER REQUESTS) -->
+      <div class="bg-white rounded-3xl border border-emerald-100 p-5 shadow-sm relative overflow-hidden">
+        <div class="flex justify-between items-center mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-black">
+              🚨
+            </div>
+            <div>
+              <h3 class="font-extrabold text-gray-900 text-base">Maombi ya Abiria ya Moja kwa Moja (Live Passenger Requests)</h3>
+              <p class="text-xs text-gray-400">Maombi ya safari yanayoendelea sasa hivi ndani ya mfumo wa Eddie Ride</p>
+            </div>
+          </div>
+          <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5" id="activeRequestsCountBadge">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> <span id="activeRequestsCountText">0 Maombi ya Sasa</span>
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
+              <tr>
+                <th class="p-3">Muda</th>
+                <th class="p-3">Abiria</th>
+                <th class="p-3">Kutoka (Pickup)</th>
+                <th class="p-3">Kwenda (Destination)</th>
+                <th class="p-3">Chombo</th>
+                <th class="p-3">Nauli</th>
+                <th class="p-3">Dereva</th>
+                <th class="p-3">Hadhi</th>
+              </tr>
+            </thead>
+            <tbody id="activeRequestsTableBody" class="divide-y divide-gray-100">
+              <!-- Loaded via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- TRANSACTIONS & COMMISSION LEDGER -->
       <div class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
         <div class="flex justify-between items-center mb-4">
@@ -277,6 +321,7 @@
         document.getElementById('adminMainContent').classList.remove('hidden');
         initFleetMap();
         loadAdminData();
+        setupSocketListener();
       } else {
         document.getElementById('loginOverlay').classList.remove('hidden');
         document.getElementById('adminMainContent').classList.add('hidden');
@@ -360,6 +405,33 @@
           document.getElementById('driversNet').innerText = `TZS ${data.stats.driversPayout.toLocaleString()}`;
           document.getElementById('onlineDrivers').innerText = `${data.stats.activeDriversCount} Hewani`;
 
+          // Pakia Maombi ya Abiria ya Sasa (Active Requests)
+          const activeReqTbody = document.getElementById('activeRequestsTableBody');
+          const activeReqBadge = document.getElementById('activeRequestsCountText');
+          if (data.activeRequests && data.activeRequests.length > 0) {
+            activeReqBadge.innerText = `${data.activeRequests.length} Maombi ya Sasa`;
+            activeReqTbody.innerHTML = data.activeRequests.map(r => {
+              const reqTime = new Date(r.requestedAt).toLocaleTimeString('sw-TZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+              const statusColor = r.status === 'SEARCHING' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800';
+              return `
+                <tr class="hover:bg-gray-50/80 transition">
+                  <td class="p-3 text-gray-500 font-medium whitespace-nowrap">${reqTime}</td>
+                  <td class="p-3 font-bold text-gray-900">${r.passenger}</td>
+                  <td class="p-3 text-gray-700">${r.pickup}</td>
+                  <td class="p-3 text-gray-700">${r.destination}</td>
+                  <td class="p-3 uppercase font-bold text-[10px] text-gray-600">${r.rideType}</td>
+                  <td class="p-3 font-black text-gray-900">TZS ${Number(r.fare).toLocaleString()}</td>
+                  <td class="p-3 font-bold text-emerald-700">${r.driverName}</td>
+                  <td class="p-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${statusColor}">${r.status}</span></td>
+                </tr>
+              `;
+            }).join('');
+          } else {
+            activeReqBadge.innerText = `0 Maombi ya Sasa`;
+            activeReqTbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-gray-400">Hakuna maombi ya abiria yanayoendelea sasa. Abiria akiagiza safari itaonekana hapa papo hapo.</td></tr>`;
+          }
+
+          // Pakia Jedwali la Safari Zilizokamilika
           const tbody = document.getElementById('transactionsTableBody');
           if (data.transactions.length > 0) {
             tbody.innerHTML = data.transactions.map(t => {
@@ -417,6 +489,31 @@
         console.error("Kosa la kupakia data za admin:", err);
       }
     }
+
+    // 5. REAL-TIME SOCKET LISTENER KWA AJILI YA ADMIN
+    let socketInitialized = false;
+    function setupSocketListener() {
+      if (socketInitialized) return;
+      socketInitialized = true;
+      try {
+        const socket = io();
+        socket.on('admin:ride_requested', (ride) => {
+          console.log('🚨 Ombi jipya la abiria:', ride);
+          loadAdminData();
+        });
+        socket.on('admin:ride_updated', (update) => {
+          console.log('🔄 Mabadiliko ya safari:', update);
+          loadAdminData();
+        });
+      } catch (err) {
+        console.warn("Socket init error:", err);
+      }
+    }
+
+    // Sasisha kiotomatiki kila sekunde 8
+    setInterval(() => {
+      if (adminToken) loadAdminData();
+    }, 8000);
 
     // Anzisha ukaguzi mara tu ukurasa unapofunguka
     checkAuth();

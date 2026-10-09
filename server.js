@@ -27,9 +27,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Kurasa 3 Maalum za Watumiaji (Dedicated Dashboards)
+// Kurasa Maalum za Watumiaji (Dedicated Dashboards)
 app.get('/driver', (req, res) => res.sendFile(path.join(__dirname, 'driver.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
+app.get('/auth', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // ==========================================
@@ -187,7 +190,7 @@ app.get('/api/admin/stats', (req, res) => {
     const availableDrivers = Object.values(drivers);
 
     const totalRevenue = rides.reduce((sum, r) => sum + (Number(r.fare) || 0), 0);
-    const commissionRate = 0.15; // 15% Bolt Commission
+    const commissionRate = 0.15; // 15% Bolt/Eddie Ride Commission
     const companyEarnings = Math.round(totalRevenue * commissionRate);
     const driversPayout = totalRevenue - companyEarnings;
 
@@ -205,6 +208,20 @@ app.get('/api/admin/stats', (req, res) => {
       status: r.status
     }));
 
+    // Orodha ya Maombi ya Abiria ya Sasa (Active & Pending Passenger Requests)
+    const activeRequests = Object.values(activeRides).map(r => ({
+      rideId: r.id,
+      passenger: r.passengerName || "Mteja",
+      pickup: r.pickup?.address || "Posta",
+      destination: r.destination?.address || "Mlimani City",
+      rideType: r.rideType,
+      fare: r.fare,
+      status: r.status,
+      driverId: r.driverId,
+      driverName: drivers[r.driverId]?.name || (r.status === 'SEARCHING' ? 'Inatafuta Dereva...' : 'Dereva'),
+      requestedAt: r.requestedAt || new Date().toISOString()
+    }));
+
     res.json({
       success: true,
       stats: {
@@ -214,8 +231,10 @@ app.get('/api/admin/stats', (req, res) => {
         companyEarnings,
         driversPayout,
         activeDriversCount: availableDrivers.filter(d => d.isOnline).length,
-        totalPaymentsRecorded: payments.length
+        totalPaymentsRecorded: payments.length,
+        activeRequestsCount: activeRequests.length
       },
+      activeRequests,
       transactions: breakdown
     });
   } catch (err) {
@@ -224,7 +243,7 @@ app.get('/api/admin/stats', (req, res) => {
   }
 });
 
-// 4. API YA USAJILI WA WATUMIAJI
+// 4. API YA USAJILI WA WATUMIAJI (Abiria au Dereva)
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, phone, email, password, role, vehicleDetails } = req.body;
@@ -233,7 +252,8 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ success: false, message: "Jina, simu na nenosiri vinahitajika!" });
     }
 
-    const existing = db.findUserByPhone(phone);
+    const cleanPhone = phone.trim();
+    const existing = db.findUserByPhone(cleanPhone);
     if (existing) {
       return res.status(400).json({ success: false, message: "Namba hii ya simu tayari imesajiliwa!" });
     }
@@ -241,17 +261,40 @@ app.post('/api/auth/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = db.addUser({
       name,
-      phone,
-      email,
+      phone: cleanPhone,
+      email: email || '',
       password: hashedPassword,
       role: role || 'passenger',
       driverDetails: role === 'driver' ? vehicleDetails : null
     });
 
+    // Kama amejisajili kama dereva, msajili pia kwenye orodha ya madereva wa mtandao
+    if (role === 'driver') {
+      drivers[newUser.id] = {
+        id: newUser.id,
+        name: newUser.name,
+        phone: newUser.phone,
+        vehicle: vehicleDetails?.vehicle || "Toyota IST",
+        plate: vehicleDetails?.plate || "T 000 ABC",
+        rating: 5.0,
+        type: vehicleDetails?.type || "standard",
+        location: { lat: -6.8120, lng: 39.2820 },
+        isOnline: true,
+        isBusy: false,
+        socketId: null
+      };
+    }
+
     res.json({
       success: true,
       message: "Umefanikiwa kusajiliwa!",
-      user: { id: newUser.id, name: newUser.name, phone: newUser.phone, role: newUser.role }
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        phone: newUser.phone,
+        role: newUser.role,
+        driverDetails: newUser.driverDetails
+      }
     });
   } catch (err) {
     console.error("Auth register error:", err);
@@ -259,12 +302,25 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// 5. API YA KUINGIA (Login)
+// 5. API YA KUINGIA (Login: Dereva, Msimamizi, au Abiria)
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { phone, password } = req.body;
-    const user = db.findUserByPhone(phone);
+    const cleanPhone = (phone || '').trim();
 
+    // 1. Ruhusu Msimamizi (Admin) kuingia kupitia fomu hii pia
+    if ((cleanPhone.toLowerCase() === ADMIN_USER || cleanPhone === 'admin' || cleanPhone === '0626198847') && password === ADMIN_PASS) {
+      return res.json({
+        success: true,
+        message: "Karibu Msimamizi wa Eddie Ride!",
+        role: "admin",
+        token: ADMIN_TOKEN,
+        user: { id: "admin_1", name: "Eddie Msimamizi", phone: "0626198847", role: "admin" }
+      });
+    }
+
+    // 2. Hakiki dereva au abiria wa kawaida
+    const user = db.findUserByPhone(cleanPhone);
     if (!user) {
       return res.status(401).json({ success: false, message: "Namba ya simu au nenosiri si sahihi!" });
     }
@@ -274,10 +330,33 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ success: false, message: "Namba ya simu au nenosiri si sahihi!" });
     }
 
+    // Kama ni dereva, hakikisha yupo kwenye orodha ya madereva
+    if (user.role === 'driver' && !drivers[user.id]) {
+      drivers[user.id] = {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        vehicle: user.driverDetails?.vehicle || "Toyota IST",
+        plate: user.driverDetails?.plate || "T 000 ABC",
+        rating: 5.0,
+        type: user.driverDetails?.type || "standard",
+        location: { lat: -6.8120, lng: 39.2820 },
+        isOnline: true,
+        isBusy: false,
+        socketId: null
+      };
+    }
+
     res.json({
       success: true,
       message: "Umefanikiwa kuingia!",
-      user: { id: user.id, name: user.name, phone: user.phone, role: user.role }
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        role: user.role,
+        driverDetails: user.driverDetails
+      }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: "Hitilafu ya kuingia." });
@@ -370,6 +449,20 @@ io.on('connection', (socket) => {
       drivers[driverId].socketId = socket.id;
       drivers[driverId].isOnline = true;
       if (driverData.location) drivers[driverId].location = driverData.location;
+    } else {
+      drivers[driverId] = {
+        id: driverId,
+        name: driverData.name || "Dereva",
+        phone: driverData.phone || "+255 700 000 000",
+        vehicle: driverData.vehicle || "Toyota IST",
+        plate: driverData.plate || "T 000 ABC",
+        rating: 5.0,
+        type: driverData.type || "standard",
+        location: driverData.location || { lat: -6.8120, lng: 39.2820 },
+        isOnline: true,
+        isBusy: false,
+        socketId: socket.id
+      };
     }
     socket.join('drivers_room');
   });
@@ -398,10 +491,14 @@ io.on('connection', (socket) => {
       distanceKm: rideRequest.distanceKm || 5.0,
       paymentMethod: rideRequest.paymentMethod || 'mpesa',
       status: "SEARCHING",
-      driverId: null
+      driverId: null,
+      requestedAt: new Date().toISOString()
     };
 
     activeRides[rideId] = newRide;
+
+    // Arifu Admin kuwa kuna ombi jipya la safari
+    io.emit('admin:ride_requested', newRide);
 
     let nearestDriver = null;
     let minDistance = Infinity;
@@ -450,6 +547,9 @@ io.on('connection', (socket) => {
       ride.driverId = driverId;
       driver.isBusy = true;
       driver.activeRideId = rideId;
+
+      // Arifu Admin kuwa dereva amekubali safari
+      io.emit('admin:ride_updated', { rideId, status: 'ACCEPTED', driver: driver.name });
 
       // Tuma SMS kwa simu ya abiria
       const smsText = `HABARI: Dereva wako wa Eddie Ride, ${driver.name} (${driver.vehicle} - ${driver.plate}) anakufuata sasa. Nauli: TZS ${Number(ride.fare).toLocaleString()}. Msaada: 0626198847.`;
@@ -502,6 +602,8 @@ io.on('connection', (socket) => {
       db.addRide(completedRideRecord);
 
       io.to(ride.passengerSocketId).emit('passenger:ride_completed', { fare: ride.fare, rideId: ride.id });
+      io.emit('admin:ride_updated', { rideId: ride.id, status: 'COMPLETED' });
+      delete activeRides[rideId];
     }
   });
 
