@@ -92,6 +92,16 @@
       "currency": "TZS",
       "status": "COMPLETED",
       "timestamp": "2026-10-09T06:33:45.250Z"
+    },
+    {
+      "transactionId": "AIRTEL-TZ-37555389",
+      "rideId": "RIDE_1791540229943",
+      "phone": "255754123456",
+      "provider": "airtel",
+      "amount": 12300,
+      "currency": "TZS",
+      "status": "COMPLETED",
+      "timestamp": "2026-10-09T10:04:06.308Z"
     }
   ]
 }

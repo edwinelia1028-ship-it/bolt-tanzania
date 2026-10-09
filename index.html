@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bolt Clone - Mfumo Kamili wa Usafiri & Malipo</title>
+  <title>Bolt Clone - Mfumo Kamili wa Usafiri, Malipo & Usimamizi</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -38,18 +38,23 @@
       <span class="text-2xl font-black tracking-tight text-gray-900">Bolt</span>
       
       <span id="serverStatus" class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5 ml-2">
-        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> Inajiunga na Seva...
+        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> Inajiunga...
       </span>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2.5">
+      <!-- Admin Dashboard Button -->
+      <button onclick="openAdminModal()" class="text-xs font-bold px-3 py-2 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-crown text-amber-500"></i> Msimamizi (15%)
+      </button>
+
       <!-- Ride History Button -->
-      <button onclick="openHistoryModal()" class="text-xs font-bold px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition flex items-center gap-1.5">
-        <i class="fa-solid fa-clock-rotate-left"></i> Historia ya Safari
+      <button onclick="openHistoryModal()" class="text-xs font-bold px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-clock-rotate-left"></i> Historia
       </button>
 
       <!-- Driver Mode Toggle -->
-      <button id="modeToggleBtn" onclick="toggleMode()" class="text-xs font-semibold px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition text-gray-800 flex items-center gap-1.5">
+      <button id="modeToggleBtn" onclick="toggleMode()" class="text-xs font-semibold px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition text-gray-800 flex items-center gap-1.5">
         <i class="fa-solid fa-car"></i> <span id="modeText">Hali ya Dereva</span>
       </button>
 
@@ -70,33 +75,45 @@
       
       <!-- STATE 1: BOOKING FORM -->
       <div id="bookingState">
-        <h2 class="text-xl font-extrabold text-gray-900 mb-1">Wapi unataka kwenda?</h2>
-        <p class="text-xs text-gray-400 mb-4">Andika jina la eneo au bonyeza kwenye ramani</p>
+        <div class="flex justify-between items-center mb-1">
+          <h2 class="text-xl font-extrabold text-gray-900">Wapi unataka kwenda?</h2>
+        </div>
+        <p class="text-xs text-gray-400 mb-3">Andika jina au tumia GPS ya simu yako</p>
 
         <!-- Address Inputs -->
         <div class="space-y-3 mb-4">
           <!-- PICKUP -->
           <div class="relative">
-            <div class="flex items-center">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[11px] font-bold text-gray-500">Unapoanzia (Pickup):</span>
+              <!-- GPS Geolocation Button -->
+              <button onclick="useCurrentLocation()" id="gpsBtn" class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition flex items-center gap-1">
+                <i class="fa-solid fa-location-crosshairs"></i> <span id="gpsText">Tumia Eneo Langu (GPS)</span>
+              </button>
+            </div>
+            <div class="flex items-center relative">
               <span class="absolute left-3 text-emerald-600 font-bold text-lg">•</span>
               <input type="text" id="pickupInput" value="Posta Mpya, Dar es Salaam" placeholder="Mahali unapoanzia..." 
                 oninput="searchPlaces('pickup', this.value)"
                 class="w-full pl-8 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none" />
               <i id="pickupSpinner" class="fa-solid fa-spinner fa-spin absolute right-3 text-gray-400 text-xs hidden"></i>
             </div>
-            <div id="pickupResults" class="absolute left-0 right-0 top-12 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 hidden overflow-hidden max-h-48 overflow-y-auto"></div>
+            <div id="pickupResults" class="absolute left-0 right-0 top-16 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 hidden overflow-hidden max-h-48 overflow-y-auto"></div>
           </div>
 
           <!-- DESTINATION -->
           <div class="relative">
-            <div class="flex items-center">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[11px] font-bold text-gray-500">Unapokwenda (Destination):</span>
+            </div>
+            <div class="flex items-center relative">
               <span class="absolute left-3 text-rose-500 font-bold text-lg">■</span>
               <input type="text" id="destInput" value="Mlimani City Mall, Ubungo" placeholder="Unapokwenda..." 
                 oninput="searchPlaces('dest', this.value)"
                 class="w-full pl-8 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none" />
               <i id="destSpinner" class="fa-solid fa-spinner fa-spin absolute right-3 text-gray-400 text-xs hidden"></i>
             </div>
-            <div id="destResults" class="absolute left-0 right-0 top-12 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 hidden overflow-hidden max-h-48 overflow-y-auto"></div>
+            <div id="destResults" class="absolute left-0 right-0 top-16 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 hidden overflow-hidden max-h-48 overflow-y-auto"></div>
           </div>
         </div>
 
@@ -172,7 +189,6 @@
             <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">STK Push</span>
           </div>
 
-          <!-- Phone input for Mobile Money -->
           <div id="phoneInputContainer" class="mt-2">
             <label class="text-[11px] font-semibold text-gray-500 block mb-1">Namba ya Simu ya Kupokea Muamala:</label>
             <div class="relative flex items-center">
@@ -236,7 +252,6 @@
             <i class="fa-solid fa-phone"></i> Piga Simu
           </button>
           
-          <!-- Pay with M-Pesa / Tigo Pesa Button -->
           <button onclick="triggerStkPush()" class="py-2.5 rounded-xl bg-emerald-500 text-white font-bold text-xs hover:bg-emerald-600 flex items-center justify-center gap-1 shadow-md shadow-emerald-500/20">
             <i class="fa-solid fa-credit-card"></i> Lipa kwa Simu
           </button>
@@ -271,9 +286,12 @@
         <p class="text-[11px] text-emerald-600 mt-0.5">Safari 8 zimekamilika</p>
       </div>
 
-      <div id="incomingRequestCard" class="hidden border-2 border-emerald-500 rounded-2xl p-3 bg-white shadow-md animate-bounce">
+      <!-- Incoming Request Card (with Siren Pulse) -->
+      <div id="incomingRequestCard" class="hidden border-2 border-emerald-500 rounded-2xl p-3 bg-white shadow-xl animate-bounce">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold text-emerald-600">🚨 Oda Mpya ya Safari!</span>
+          <span class="text-xs font-bold text-rose-600 flex items-center gap-1">
+            <i class="fa-solid fa-bell text-rose-500 animate-spin"></i> Oda Mpya ya Safari!
+          </span>
           <span id="driverOfferFare" class="text-xs font-extrabold text-gray-900">TZS 11,900</span>
         </div>
         <p class="text-xs text-gray-600" id="driverReqPickup"><strong>Kutoka:</strong> Posta Mpya</p>
@@ -292,11 +310,9 @@
 
   </div>
 
-  <!-- STK PUSH INTERACTIVE MODAL (Muamala wa Simu) -->
+  <!-- STK PUSH INTERACTIVE MODAL -->
   <div id="stkModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center animate-scaleIn">
-      
-      <!-- STK Step 1: Processing / USSD Simulation -->
       <div id="stkStepPrompt">
         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl">
           <i class="fa-solid fa-mobile-screen animate-bounce"></i>
@@ -324,7 +340,6 @@
         </div>
       </div>
 
-      <!-- STK Step 2: Payment Success Receipt -->
       <div id="stkStepSuccess" class="hidden">
         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-3xl shadow-lg shadow-emerald-500/40">
           <i class="fa-solid fa-check"></i>
@@ -351,7 +366,51 @@
           Sawa, Funga
         </button>
       </div>
+    </div>
+  </div>
 
+  <!-- ADMIN DASHBOARD MODAL (15% Commission & Platform Stats) -->
+  <div id="adminModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 max-h-[88vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+            👑
+          </div>
+          <div>
+            <h3 class="text-lg font-extrabold text-gray-900">Dashibodi ya Msimamizi (Bolt Tanzania)</h3>
+            <p class="text-xs text-gray-400">Mapato, Kamisheni ya Kampuni (15%) na Takwimu za Mfumo</p>
+          </div>
+        </div>
+        <button onclick="closeAdminModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center font-bold">
+          ✕
+        </button>
+      </div>
+
+      <!-- Stat Cards Grid -->
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 text-center">
+          <p class="text-[11px] font-bold text-gray-500">Jumla ya Mauzo (Gross)</p>
+          <p class="text-lg font-black text-gray-900 mt-1" id="adminTotalGross">TZS 0</p>
+          <p class="text-[10px] text-gray-400" id="adminTotalRides">0 Safari</p>
+        </div>
+
+        <div class="bg-purple-50 p-3.5 rounded-2xl border border-purple-100 text-center">
+          <p class="text-[11px] font-bold text-purple-700">Faida ya Kampuni (15%)</p>
+          <p class="text-lg font-black text-purple-900 mt-1" id="adminCompanyCut">TZS 0</p>
+          <p class="text-[10px] text-purple-600 font-bold">Kamisheni Yako</p>
+        </div>
+
+        <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-100 text-center">
+          <p class="text-[11px] font-bold text-emerald-700">Madereva (85%)</p>
+          <p class="text-lg font-black text-emerald-900 mt-1" id="adminDriversCut">TZS 0</p>
+          <p class="text-[10px] text-emerald-600 font-bold">Mapato ya Madereva</p>
+        </div>
+      </div>
+
+      <!-- Transactions Table -->
+      <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Miamala na Mgao wa Safari</h4>
+      <div id="adminTransactionsContainer" class="space-y-2 overflow-y-auto flex-1 pr-1"></div>
     </div>
   </div>
 
@@ -361,13 +420,12 @@
       <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
         <div>
           <h3 class="text-lg font-extrabold text-gray-900">Historia ya Safari & Malipo</h3>
-          <p class="text-xs text-gray-400">Safari zilizohifadhiwa kwenye Hifadhidata (Local DB)</p>
+          <p class="text-xs text-gray-400">Safari zilizohifadhiwa kwenye Database</p>
         </div>
         <button onclick="closeHistoryModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center font-bold">
           ✕
         </button>
       </div>
-
       <div id="historyListContainer" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
     </div>
   </div>
@@ -411,7 +469,46 @@
     });
     const driverCarMarker = L.marker(currentCarPos, { icon: carIcon }).addTo(map);
 
-    // 2. TAFUTA MAENEO MOJA KWA MOJA
+    // 2. GPS HALISI YA SIMU (Device Geolocation API)
+    function useCurrentLocation() {
+      const gpsBtn = document.getElementById('gpsBtn');
+      const gpsText = document.getElementById('gpsText');
+
+      if (!navigator.geolocation) {
+        alert("Kivinjari hiki hakiruhusu kusoma GPS.");
+        return;
+      }
+
+      gpsText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Inasoma GPS...';
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          pickupCoords = [position.coords.latitude, position.coords.longitude];
+          pickupMarker.setLatLng(pickupCoords);
+          map.flyTo(pickupCoords, 15);
+
+          // Pata jina halisi la mtaa kutoka kwa seva
+          try {
+            const res = await fetch(`/api/places/reverse?lat=${pickupCoords[0]}&lng=${pickupCoords[1]}`);
+            const data = await res.json();
+            document.getElementById('pickupInput').value = data.name || "Eneo Langu la Sasa (GPS)";
+          } catch (e) {
+            document.getElementById('pickupInput').value = `Eneo Langu (${pickupCoords[0].toFixed(4)}, ${pickupCoords[1].toFixed(4)})`;
+          }
+
+          gpsText.innerHTML = '✅ GPS Imepatikana';
+          setTimeout(() => gpsText.innerText = 'Tumia Eneo Langu (GPS)', 3000);
+          updateRouteAndFares();
+        },
+        (error) => {
+          alert("Imeshindwa kupata GPS. Tafadhali ruhusu Location Access (Ruhusa ya Eneo) kwenye kivinjari chako.");
+          gpsText.innerText = 'Tumia Eneo Langu (GPS)';
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    // 3. TAFUTA MAENEO MOJA KWA MOJA
     let searchDebounce = null;
 
     function searchPlaces(type, query) {
@@ -522,7 +619,39 @@
       }
     }
 
-    // 3. UNGANISHA NA SOCKET.IO
+    // 4. MLIO WA ARIFA WA DEREVA (Web Audio Chime / Siren Alert)
+    function playRideAlertSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+
+        function beep(freq, delay, dur) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + dur);
+        }
+
+        // Chime: Ding-Dong! Ding-Dong! Ding-Dong!
+        beep(784, 0.0, 0.25);   // G5
+        beep(1046, 0.25, 0.35); // C6
+        beep(784, 0.7, 0.25);
+        beep(1046, 0.95, 0.35);
+        beep(784, 1.4, 0.25);
+        beep(1046, 1.65, 0.45);
+      } catch (e) {
+        console.warn("Audio blocked by browser policy:", e);
+      }
+    }
+
+    // 5. UNGANISHA NA SOCKET.IO
     const socket = io();
     let selectedRideType = 'standard';
     let currentFare = 11900;
@@ -531,7 +660,7 @@
     socket.on('connect', () => {
       const statusBadge = document.getElementById('serverStatus');
       statusBadge.className = "text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5 ml-2";
-      statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Seva Imewaka (Online)`;
+      statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Online`;
 
       socket.emit('driver:online', {
         id: "drv_101",
@@ -569,6 +698,7 @@
       });
     }
 
+    // DEREVA AKIPATA ODA (Pamoja na Mlio wa Sauti!)
     socket.on('driver:incoming_ride', (data) => {
       activeRideId = data.rideId;
       document.getElementById('driverOfferFare').innerText = `TZS ${data.fare.toLocaleString()}`;
@@ -576,6 +706,9 @@
       document.getElementById('driverReqDest').innerHTML = `<strong>Kwenda:</strong> ${data.destination.address || 'Mlimani City'}`;
       document.getElementById('incomingRequestCard').classList.remove('hidden');
       document.getElementById('noRequestsMsg').classList.add('hidden');
+
+      // Washa Mlio wa Kengele/King'ora cha Dereva!
+      playRideAlertSound();
     });
 
     function acceptRideFromDriver() {
@@ -606,7 +739,7 @@
       }, 350);
     });
 
-    // 4. MALIPO YA STK PUSH (M-PESA / TIGO PESA)
+    // 6. MALIPO YA STK PUSH
     async function triggerStkPush() {
       const provider = document.getElementById('paymentProviderSelect').value;
       const phone = document.getElementById('payerPhoneNumber').value;
@@ -616,7 +749,6 @@
         return;
       }
 
-      // Fungua modal ya STK Push
       const modal = document.getElementById('stkModal');
       document.getElementById('stkStepPrompt').classList.remove('hidden');
       document.getElementById('stkStepSuccess').classList.add('hidden');
@@ -640,7 +772,6 @@
         const data = await response.json();
 
         if (data.success) {
-          // Badili modal kuonyesha stakabadhi ya ushindi
           document.getElementById('stkStepPrompt').classList.add('hidden');
           document.getElementById('stkStepSuccess').classList.remove('hidden');
           document.getElementById('stkTxIdDisplay').innerText = data.transactionId;
@@ -676,7 +807,50 @@
       document.getElementById('driverPanel').classList.toggle('hidden');
     }
 
-    // 5. HISTORIA YA SAFARI & MALIPO
+    // 7. DASHIBODI YA MSIMAMIZI (15% COMMISSION)
+    async function openAdminModal() {
+      const modal = document.getElementById('adminModal');
+      const container = document.getElementById('adminTransactionsContainer');
+      modal.classList.remove('hidden');
+      container.innerHTML = '<p class="text-center text-xs text-gray-400 py-6"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Inapakia takwimu za msimamizi...</p>';
+
+      try {
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('adminTotalGross').innerText = `TZS ${data.stats.totalRevenue.toLocaleString()}`;
+          document.getElementById('adminTotalRides').innerText = `${data.stats.totalRides} Safari zilizokamilika`;
+          document.getElementById('adminCompanyCut').innerText = `TZS ${data.stats.companyEarnings.toLocaleString()}`;
+          document.getElementById('adminDriversCut').innerText = `TZS ${data.stats.driversPayout.toLocaleString()}`;
+
+          if (data.transactions.length > 0) {
+            container.innerHTML = data.transactions.map(t => `
+              <div class="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between text-xs">
+                <div>
+                  <p class="font-bold text-gray-800">${t.pickup} ➔ ${t.destination}</p>
+                  <p class="text-[10px] text-gray-400">Dereva: ${t.driver} • Nauli: TZS ${t.fare.toLocaleString()}</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-purple-700 font-black">+TZS ${t.commission.toLocaleString()} (15%)</span>
+                  <p class="text-[10px] text-emerald-600 font-bold">Dereva: TZS ${t.driverNet.toLocaleString()}</p>
+                </div>
+              </div>
+            `).join('');
+          } else {
+            container.innerHTML = '<p class="text-center text-xs text-gray-400 py-6">Hakuna miamala bado.</p>';
+          }
+        }
+      } catch (e) {
+        container.innerHTML = '<p class="text-center text-xs text-rose-500 py-6">Hitilafu ya kupakia takwimu.</p>';
+      }
+    }
+
+    function closeAdminModal() {
+      document.getElementById('adminModal').classList.add('hidden');
+    }
+
+    // 8. HISTORIA YA SAFARI
     async function openHistoryModal() {
       const modal = document.getElementById('historyModal');
       const container = document.getElementById('historyListContainer');

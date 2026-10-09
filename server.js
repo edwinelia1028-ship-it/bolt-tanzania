@@ -126,7 +126,70 @@ app.get('/api/places/search', async (req, res) => {
   }
 });
 
-// 3. API YA USAJILI WA WATUMIAJI
+// 2.5 API ya Reverse Geocoding (Kupata jina la mtaa kutoka GPS lat/lng)
+app.get('/api/places/reverse', async (req, res) => {
+  const { lat, lng } = req.query;
+  if (!lat || !lng) return res.status(400).json({ success: false });
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'BoltCloneApp/1.0' }
+    });
+    const data = await response.json();
+    const name = data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : `Eneo Langu (${parseFloat(lat).toFixed(3)}, ${parseFloat(lng).toFixed(3)})`;
+    res.json({ success: true, name, fullAddress: data.display_name });
+  } catch (error) {
+    res.json({ success: true, name: `Eneo Langu (${parseFloat(lat).toFixed(3)}, ${parseFloat(lng).toFixed(3)})` });
+  }
+});
+
+// 3. API YA TAKWIMU ZA MSIMAMIZI (Admin Dashboard Stats & 15% Commission)
+app.get('/api/admin/stats', (req, res) => {
+  try {
+    const rides = db.getAllRides();
+    const payments = db.getAllPayments();
+    const availableDrivers = Object.values(drivers);
+
+    const totalRevenue = rides.reduce((sum, r) => sum + (Number(r.fare) || 0), 0);
+    const commissionRate = 0.15; // 15% Bolt Commission
+    const companyEarnings = Math.round(totalRevenue * commissionRate);
+    const driversPayout = totalRevenue - companyEarnings;
+
+    const breakdown = rides.map(r => ({
+      rideId: r.rideId,
+      date: r.createdAt,
+      passenger: r.passenger?.name || "Mteja",
+      driver: r.driver?.name || "Juma Rashid",
+      pickup: r.pickup?.address || "Pickup",
+      destination: r.destination?.address || "Destination",
+      fare: r.fare,
+      commission: Math.round(r.fare * commissionRate),
+      driverNet: Math.round(r.fare * (1 - commissionRate)),
+      paymentMethod: r.paymentMethod || "mpesa",
+      status: r.status
+    }));
+
+    res.json({
+      success: true,
+      stats: {
+        totalRides: rides.length,
+        totalRevenue,
+        commissionRate: "15%",
+        companyEarnings,
+        driversPayout,
+        activeDriversCount: availableDrivers.filter(d => d.isOnline).length,
+        totalPaymentsRecorded: payments.length
+      },
+      transactions: breakdown
+    });
+  } catch (err) {
+    console.error("Admin stats error:", err);
+    res.status(500).json({ success: false, error: "Hitilafu ya kupata takwimu za msimamizi" });
+  }
+});
+
+// 4. API YA USAJILI WA WATUMIAJI
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, phone, email, password, role, vehicleDetails } = req.body;
@@ -161,7 +224,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// 4. API YA KUINGIA (Login)
+// 5. API YA KUINGIA (Login)
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -186,7 +249,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// 5. API YA HISTORIA YA SAFARI
+// 6. API YA HISTORIA YA SAFARI
 app.get('/api/rides/history', (req, res) => {
   try {
     const rides = db.getAllRides();
@@ -197,7 +260,7 @@ app.get('/api/rides/history', (req, res) => {
   }
 });
 
-// 6. API YA MALIPO YA SIMU (M-PESA / TIGO PESA / AIRTEL MONEY STK PUSH)
+// 7. API YA MALIPO YA SIMU (M-PESA / TIGO PESA / AIRTEL MONEY STK PUSH)
 app.post('/api/payments/stk-push', (req, res) => {
   const { phoneNumber, provider, amount, rideId } = req.body;
 
@@ -208,7 +271,6 @@ app.post('/api/payments/stk-push', (req, res) => {
     });
   }
 
-  // Safisha namba ya simu
   let cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
   if (cleanPhone.startsWith('0')) {
     cleanPhone = '255' + cleanPhone.substring(1);
@@ -223,7 +285,6 @@ app.post('/api/payments/stk-push', (req, res) => {
   console.log(`Kiasi: TZS ${amount.toLocaleString()} | Kumbukumbu: ${txId}`);
   console.log(`===============================================`);
 
-  // Iga mchakato wa mtandao (Simulate USSD PIN Prompt 2.5 seconds)
   setTimeout(() => {
     const paymentRecord = {
       transactionId: txId,
@@ -236,7 +297,6 @@ app.post('/api/payments/stk-push', (req, res) => {
       timestamp: new Date().toISOString()
     };
 
-    // Hifadhi muamala kwenye Database
     db.addPayment(paymentRecord);
 
     res.json({
@@ -249,12 +309,7 @@ app.post('/api/payments/stk-push', (req, res) => {
   }, 2500);
 });
 
-// API ya Kusoma Historia ya Malipo
-app.get('/api/payments/history', (req, res) => {
-  res.json({ success: true, payments: db.getAllPayments() });
-});
-
-// 7. API ya Kuangalia Madereva Walio Hewani
+// 8. API ya Kuangalia Madereva Walio Hewani
 app.get('/api/drivers/available', (req, res) => {
   const available = Object.values(drivers).filter(d => d.isOnline && !d.isBusy);
   res.json({ success: true, count: available.length, drivers: available });
@@ -407,6 +462,7 @@ server.listen(PORT, () => {
   console.log(`===============================================`);
   console.log(`🚀 BOLT BACKEND INAFANYA KAZI KIKAMILIFU!`);
   console.log(`💾 Hifadhidata ya Kudumu: bolt_database.json`);
+  console.log(`👑 Dashibodi ya Msimamizi (15% Kamisheni): /api/admin/stats`);
   console.log(`👉 Fungua: http://localhost:${PORT}`);
   console.log(`===============================================`);
 });
