@@ -1,0 +1,97 @@
+{
+  "users": [],
+  "rides": [
+    {
+      "rideId": "RIDE_SAMPLE_1",
+      "passenger": {
+        "name": "Amina Bakari",
+        "phone": "+255 714 555 123"
+      },
+      "driver": {
+        "name": "Juma Rashid",
+        "vehicle": "Toyota IST",
+        "plate": "T 482 DXY"
+      },
+      "pickup": {
+        "address": "Posta Mpya, Kivukoni"
+      },
+      "destination": {
+        "address": "Mlimani City Mall, Ubungo"
+      },
+      "rideType": "standard",
+      "distanceKm": 7.8,
+      "fare": 11900,
+      "paymentMethod": "mpesa",
+      "status": "COMPLETED",
+      "createdAt": "2026-10-09T04:19:55.483Z"
+    },
+    {
+      "rideId": "RIDE_SAMPLE_2",
+      "passenger": {
+        "name": "Kelvin John",
+        "phone": "+255 765 888 999"
+      },
+      "driver": {
+        "name": "Hamisi Selemani",
+        "vehicle": "Boxer 150",
+        "plate": "MC 123 ABC"
+      },
+      "pickup": {
+        "address": "Kariakoo Sokoni"
+      },
+      "destination": {
+        "address": "Mwenge Kinyago"
+      },
+      "rideType": "boda",
+      "distanceKm": 6.2,
+      "fare": 4500,
+      "paymentMethod": "cash",
+      "status": "COMPLETED",
+      "createdAt": "2026-10-09T01:19:55.485Z"
+    },
+    {
+      "rideId": "RIDE_1791527609468",
+      "passenger": {
+        "name": "Mteja",
+        "phone": "+255 700 000 000"
+      },
+      "driver": {
+        "name": "Juma Rashid",
+        "vehicle": "Toyota IST (Nyeupe)",
+        "plate": "T 482 DXY"
+      },
+      "pickup": {
+        "address": "Posta Mpya, Dar es Salaam",
+        "lat": -6.8163,
+        "lng": 39.2803
+      },
+      "destination": {
+        "address": "Eneo Lililochaguliwa (-6.792, 39.194)",
+        "lat": -6.791614535313795,
+        "lng": 39.19424057006837
+      },
+      "rideType": "standard",
+      "distanceKm": 9.89,
+      "fare": 14400,
+      "paymentMethod": "tigo",
+      "status": "COMPLETED",
+      "createdAt": "2026-10-09T06:33:51.825Z"
+    }
+  ],
+  "settings": {
+    "currency": "TZS",
+    "version": "1.0.0"
+  },
+  "payments": [
+    {
+      "transactionId": "TIGO-TZ-55649687",
+      "rideId": "RIDE_1791527609468",
+      "phone": "676198847",
+      "provider": "tigo",
+      "amount": 14400,
+      "currency": "TZS",
+      "status": "COMPLETED",
+      "timestamp": "2026-10-09T06:33:45.250Z"
+    }
+  ]
+}

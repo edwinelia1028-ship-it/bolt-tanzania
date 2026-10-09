@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bolt Clone - Mfumo Kamili wa Usafiri & Malipo</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Socket.io Client -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    #map { height: 100vh; width: 100%; z-index: 1; }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 0.3; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .pulse-animation {
+      animation: pulse-ring 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans overflow-hidden">
+
+  <!-- TOP NAVBAR -->
+  <nav class="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-md shadow-sm px-6 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-black text-xl shadow-md">
+        ⚡
+      </div>
+      <span class="text-2xl font-black tracking-tight text-gray-900">Bolt</span>
+      
+      <span id="serverStatus" class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5 ml-2">
+        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> Inajiunga na Seva...
+      </span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- Ride History Button -->
+      <button onclick="openHistoryModal()" class="text-xs font-bold px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-clock-rotate-left"></i> Historia ya Safari
+      </button>
+
+      <!-- Driver Mode Toggle -->
+      <button id="modeToggleBtn" onclick="toggleMode()" class="text-xs font-semibold px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition text-gray-800 flex items-center gap-1.5">
+        <i class="fa-solid fa-car"></i> <span id="modeText">Hali ya Dereva</span>
+      </button>
+
+      <div class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+        U
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN WRAPPER -->
+  <div class="relative w-full h-screen">
+    
+    <!-- MAP CONTAINER -->
+    <div id="map"></div>
+
+    <!-- PASSENGER PANEL -->
+    <div id="passengerPanel" class="absolute top-20 left-6 z-20 w-96 bg-white rounded-3xl shadow-2xl p-5 border border-gray-100 max-h-[88vh] overflow-y-auto">
+      
+      <!-- STATE 1: BOOKING FORM -->
+      <div id="bookingState">
+        <h2 class="text-xl font-extrabold text-gray-900 mb-1">Wapi unataka kwenda?</h2>
+        <p class="text-xs text-gray-400 mb-4">Andika jina la eneo au bonyeza kwenye ramani</p>
+
+        <!-- Address Inputs -->
+        <div class="space-y-3 mb-4">
+          <!-- PICKUP -->
+          <div class="relative">
+            <div class="flex items-center">
+              <span class="absolute left-3 text-emerald-600 font-bold text-lg">•</span>
+              <input type="text" id="pickupInput" value="Posta Mpya, Dar es Salaam" placeholder="Mahali unapoanzia..." 
+                oninput="searchPlaces('pickup', this.value)"
+                class="w-full pl-8 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none" />
+              <i id="pickupSpinner" class="fa-solid fa-spinner fa-spin absolute right-3 text-gray-400 text-xs hidden"></i>
+            </div>
+            <div id="pickupResults" class="absolute left-0 right-0 top-12 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 hidden overflow-hidden max-h-48 overflow-y-auto"></div>
+          </div>
+
+          <!-- DESTINATION -->
+          <div class="relative">
+            <div class="flex items-center">
+              <span class="absolute left-3 text-rose-500 font-bold text-lg">■</span>
+              <input type="text" id="destInput" value="Mlimani City Mall, Ubungo" placeholder="Unapokwenda..." 
+                oninput="searchPlaces('dest', this.value)"
+                class="w-full pl-8 pr-8 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none" />
+              <i id="destSpinner" class="fa-solid fa-spinner fa-spin absolute right-3 text-gray-400 text-xs hidden"></i>
+            </div>
+            <div id="destResults" class="absolute left-0 right-0 top-12 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 z-30 hidden overflow-hidden max-h-48 overflow-y-auto"></div>
+          </div>
+        </div>
+
+        <!-- Vehicle Selection -->
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Aina ya Usafiri</h3>
+          <span id="tripDistance" class="text-xs font-bold text-emerald-600">Umbali: 7.8 km</span>
+        </div>
+
+        <div class="space-y-2 mb-4">
+          <!-- Bolt Boda -->
+          <div onclick="selectRide('boda', 'Bolt Boda')" id="ride-boda" class="ride-card cursor-pointer p-3 rounded-2xl border border-gray-200 hover:border-emerald-500 flex items-center justify-between transition">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">🛵</span>
+              <div>
+                <p class="font-bold text-sm text-gray-800">Bolt Boda</p>
+                <p class="text-xs text-gray-400">Haraka kwenye foleni</p>
+              </div>
+            </div>
+            <p id="fare-boda" class="font-extrabold text-sm text-gray-900">TZS 4,900</p>
+          </div>
+
+          <!-- Bolt Bajaj -->
+          <div onclick="selectRide('bajaj', 'Bolt Bajaj')" id="ride-bajaj" class="ride-card cursor-pointer p-3 rounded-2xl border border-gray-200 hover:border-emerald-500 flex items-center justify-between transition">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">🛺</span>
+              <div>
+                <p class="font-bold text-sm text-gray-800">Bolt Bajaj</p>
+                <p class="text-xs text-gray-400">Nafasi 3 za kukaa</p>
+              </div>
+            </div>
+            <p id="fare-bajaj" class="font-extrabold text-sm text-gray-900">TZS 7,700</p>
+          </div>
+
+          <!-- Bolt Standard -->
+          <div onclick="selectRide('standard', 'Bolt Standard')" id="ride-standard" class="ride-card cursor-pointer p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/50 flex items-center justify-between transition">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">🚗</span>
+              <div>
+                <p class="font-bold text-sm text-gray-800">Bolt Standard</p>
+                <p class="text-xs text-gray-400">AC • Nafasi 4</p>
+              </div>
+            </div>
+            <p id="fare-standard" class="font-extrabold text-sm text-gray-900">TZS 11,900</p>
+          </div>
+
+          <!-- Bolt XL -->
+          <div onclick="selectRide('xl', 'Bolt XL')" id="ride-xl" class="ride-card cursor-pointer p-3 rounded-2xl border border-gray-200 hover:border-emerald-500 flex items-center justify-between transition">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">🚙</span>
+              <div>
+                <p class="font-bold text-sm text-gray-800">Bolt XL</p>
+                <p class="text-xs text-gray-400">Gari kubwa • Watu 6</p>
+              </div>
+            </div>
+            <p id="fare-xl" class="font-extrabold text-sm text-gray-900">TZS 18,000</p>
+          </div>
+        </div>
+
+        <!-- PAYMENT METHOD SELECTOR -->
+        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Njia ya Malipo</h3>
+        <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100 mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span id="paymentIcon" class="text-rose-600 font-bold text-base"><i class="fa-solid fa-mobile-screen"></i></span>
+              <select id="paymentProviderSelect" onchange="onPaymentProviderChange()" class="bg-transparent text-xs font-bold text-gray-800 outline-none">
+                <option value="mpesa">Vodacom M-Pesa</option>
+                <option value="tigo">Tigo Pesa</option>
+                <option value="airtel">Airtel Money</option>
+                <option value="cash">Fedha Taslimu (Cash)</option>
+              </select>
+            </div>
+            <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">STK Push</span>
+          </div>
+
+          <!-- Phone input for Mobile Money -->
+          <div id="phoneInputContainer" class="mt-2">
+            <label class="text-[11px] font-semibold text-gray-500 block mb-1">Namba ya Simu ya Kupokea Muamala:</label>
+            <div class="relative flex items-center">
+              <span class="absolute left-3 text-xs font-bold text-gray-500">+255</span>
+              <input type="tel" id="payerPhoneNumber" value="0754 123 456" placeholder="07XX XXX XXX" 
+                class="w-full pl-14 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Request Button -->
+        <button onclick="requestRide()" class="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-base shadow-lg shadow-emerald-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+          <span>Omba Safari Sasa</span>
+          <i class="fa-solid fa-arrow-right text-sm"></i>
+        </button>
+      </div>
+
+      <!-- STATE 2: SEARCHING DRIVER -->
+      <div id="searchingState" class="hidden text-center py-6">
+        <div class="relative w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+          <div class="absolute inset-0 rounded-full bg-emerald-400 pulse-animation"></div>
+          <div class="relative w-16 h-16 rounded-full bg-emerald-600 flex items-center justify-center text-white text-2xl shadow-lg">
+            🚗
+          </div>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800">Inatafuta Dereva kwenye Seva...</h3>
+        <p class="text-xs text-gray-500 mt-1">Oda imetumwa kwa madereva walio karibu kupitia Socket.io</p>
+        <button onclick="cancelSearch()" class="mt-6 px-6 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs transition">
+          Ghairi Maombi
+        </button>
+      </div>
+
+      <!-- STATE 3: DRIVER FOUND -->
+      <div id="driverFoundState" class="hidden">
+        <div class="flex items-center justify-between border-b pb-3 mb-3">
+          <div>
+            <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Dereva Amekubali</span>
+            <h4 class="text-base font-extrabold text-gray-900 mt-1">Anafika baada ya Dk 3</h4>
+          </div>
+          <span class="text-2xl font-black text-emerald-600" id="finalFare">TZS 11,900</span>
+        </div>
+
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-2xl mb-4 border border-gray-100">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl font-bold">
+              👨🏽‍✈️
+            </div>
+            <div>
+              <h5 class="text-sm font-bold text-gray-900" id="matchedDriverName">Juma Rashid</h5>
+              <p class="text-xs text-amber-500 font-bold" id="matchedDriverRating">★ 4.9 <span class="text-gray-400 font-normal">(Safari 420)</span></p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-black text-gray-800" id="matchedDriverPlate">T 482 DXY</p>
+            <p class="text-xs text-gray-500" id="matchedDriverVehicle">Toyota IST</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          <button onclick="alert('Inapiga simu: +255 754 123 456')" class="py-2.5 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs hover:bg-emerald-100 flex items-center justify-center gap-1">
+            <i class="fa-solid fa-phone"></i> Piga Simu
+          </button>
+          
+          <!-- Pay with M-Pesa / Tigo Pesa Button -->
+          <button onclick="triggerStkPush()" class="py-2.5 rounded-xl bg-emerald-500 text-white font-bold text-xs hover:bg-emerald-600 flex items-center justify-center gap-1 shadow-md shadow-emerald-500/20">
+            <i class="fa-solid fa-credit-card"></i> Lipa kwa Simu
+          </button>
+        </div>
+
+        <button onclick="completeCurrentRide()" class="w-full py-2.5 rounded-xl bg-gray-900 text-white font-bold text-xs hover:bg-black transition mb-2">
+          Kamilisha Safari (Save to DB)
+        </button>
+
+        <button onclick="cancelSearch()" class="w-full py-2 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs hover:bg-rose-100 transition">
+          Ghairi Safari
+        </button>
+      </div>
+
+    </div>
+
+    <!-- DRIVER PANEL -->
+    <div id="driverPanel" class="hidden absolute top-20 right-6 z-20 w-84 bg-white rounded-3xl shadow-2xl p-5 border border-gray-100">
+      <div class="flex items-center justify-between pb-3 border-b mb-3">
+        <div>
+          <h3 class="font-extrabold text-gray-900 text-sm">Dashibodi ya Dereva</h3>
+          <p class="text-xs text-gray-400">Juma Rashid • T 482 DXY</p>
+        </div>
+        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-600"></span> Hewani
+        </span>
+      </div>
+
+      <div class="bg-emerald-50 rounded-2xl p-4 mb-4 text-center">
+        <p class="text-xs font-bold text-emerald-700">Mapato ya Leo</p>
+        <p class="text-2xl font-black text-emerald-900 mt-1">TZS 56,000</p>
+        <p class="text-[11px] text-emerald-600 mt-0.5">Safari 8 zimekamilika</p>
+      </div>
+
+      <div id="incomingRequestCard" class="hidden border-2 border-emerald-500 rounded-2xl p-3 bg-white shadow-md animate-bounce">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-emerald-600">🚨 Oda Mpya ya Safari!</span>
+          <span id="driverOfferFare" class="text-xs font-extrabold text-gray-900">TZS 11,900</span>
+        </div>
+        <p class="text-xs text-gray-600" id="driverReqPickup"><strong>Kutoka:</strong> Posta Mpya</p>
+        <p class="text-xs text-gray-600" id="driverReqDest"><strong>Kwenda:</strong> Mlimani City</p>
+        <div class="grid grid-cols-2 gap-2 mt-3">
+          <button onclick="acceptRideFromDriver()" class="py-2.5 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 shadow-md">Kubali (Accept)</button>
+          <button onclick="declineRideFromDriver()" class="py-2.5 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-200">Kataa</button>
+        </div>
+      </div>
+
+      <div id="noRequestsMsg" class="text-center py-6 text-xs text-gray-400">
+        <i class="fa-solid fa-radar text-lg mb-1 block text-gray-300"></i>
+        Inasubiri maombi ya abiria kutoka kwenye seva...
+      </div>
+    </div>
+
+  </div>
+
+  <!-- STK PUSH INTERACTIVE MODAL (Muamala wa Simu) -->
+  <div id="stkModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center animate-scaleIn">
+      
+      <!-- STK Step 1: Processing / USSD Simulation -->
+      <div id="stkStepPrompt">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl">
+          <i class="fa-solid fa-mobile-screen animate-bounce"></i>
+        </div>
+        <h3 class="text-lg font-black text-gray-900 mb-1">Ombi la Malipo Limetumwa!</h3>
+        <p class="text-xs text-gray-500 mb-4">Tafadhali angalia simu yako sasa uweke <strong>PIN</strong> kukamilisha muamala.</p>
+
+        <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 text-left mb-4 text-xs space-y-1.5">
+          <div class="flex justify-between">
+            <span class="text-gray-400">Kiasi:</span>
+            <span class="font-extrabold text-emerald-600 text-sm" id="stkAmountDisplay">TZS 11,900</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Namba:</span>
+            <span class="font-bold text-gray-800" id="stkPhoneDisplay">0754 123 456</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Mtandao:</span>
+            <span class="font-bold uppercase text-gray-800" id="stkProviderDisplay">Vodacom M-Pesa</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 text-xs text-amber-600 font-bold">
+          <i class="fa-solid fa-spinner fa-spin"></i> Inasubiri uthibitisho kutoka kwenye simu yako...
+        </div>
+      </div>
+
+      <!-- STK Step 2: Payment Success Receipt -->
+      <div id="stkStepSuccess" class="hidden">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-3xl shadow-lg shadow-emerald-500/40">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h3 class="text-lg font-black text-gray-900 mb-1">Malipo Yamethibitishwa!</h3>
+        <p class="text-xs text-gray-500 mb-4">Muamala umekamilika na kurekodiwa kwenye database.</p>
+
+        <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-100 text-left mb-4 text-xs space-y-1.5">
+          <div class="flex justify-between">
+            <span class="text-emerald-700">Kumbukumbu ya Malipo:</span>
+            <span class="font-black text-emerald-900" id="stkTxIdDisplay">MPESA-TZ-982348</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-emerald-700">Kiasi Kilicholipwa:</span>
+            <span class="font-bold text-emerald-900" id="stkPaidAmount">TZS 11,900</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-emerald-700">Hadhi:</span>
+            <span class="font-bold text-emerald-600">IMELIPWA (COMPLETED)</span>
+          </div>
+        </div>
+
+        <button onclick="closeStkModal()" class="w-full py-3 rounded-2xl bg-emerald-500 text-white font-extrabold text-xs hover:bg-emerald-600 transition shadow-md">
+          Sawa, Funga
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIDE HISTORY MODAL -->
+  <div id="historyModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+        <div>
+          <h3 class="text-lg font-extrabold text-gray-900">Historia ya Safari & Malipo</h3>
+          <p class="text-xs text-gray-400">Safari zilizohifadhiwa kwenye Hifadhidata (Local DB)</p>
+        </div>
+        <button onclick="closeHistoryModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center font-bold">
+          ✕
+        </button>
+      </div>
+
+      <div id="historyListContainer" class="space-y-3 overflow-y-auto flex-1 pr-1"></div>
+    </div>
+  </div>
+
+  <!-- CLIENT SCRIPT -->
+  <script>
+    // 1. RAMANI (Leaflet Map)
+    const map = L.map('map').setView([-6.8163, 39.2803], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let pickupCoords = [-6.8163, 39.2803];
+    let destCoords = [-6.7725, 39.2208];
+
+    let pickupMarker = L.marker(pickupCoords, { draggable: true }).addTo(map).bindPopup("<b>Pickup (Posta Mpya)</b>").openPopup();
+    let destMarker = L.marker(destCoords, { draggable: true }).addTo(map).bindPopup("<b>Destination (Mlimani City)</b>");
+    let routeLine = L.polyline([pickupCoords, destCoords], { color: '#10b981', weight: 4, dashArray: '6, 6' }).addTo(map);
+
+    map.on('click', (e) => {
+      destCoords = [e.latlng.lat, e.latlng.lng];
+      destMarker.setLatLng(destCoords);
+      document.getElementById('destInput').value = `Eneo Lililochaguliwa (${destCoords[0].toFixed(3)}, ${destCoords[1].toFixed(3)})`;
+      updateRouteAndFares();
+    });
+
+    pickupMarker.on('dragend', (e) => {
+      pickupCoords = [e.target.getLatLng().lat, e.target.getLatLng().lng];
+      updateRouteAndFares();
+    });
+    destMarker.on('dragend', (e) => {
+      destCoords = [e.target.getLatLng().lat, e.target.getLatLng().lng];
+      updateRouteAndFares();
+    });
+
+    let currentCarPos = [-6.8120, 39.2820];
+    const carIcon = L.divIcon({
+      html: '<div style="font-size: 26px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4));">🚗</div>',
+      className: 'car-pin',
+      iconSize: [30, 30]
+    });
+    const driverCarMarker = L.marker(currentCarPos, { icon: carIcon }).addTo(map);
+
+    // 2. TAFUTA MAENEO MOJA KWA MOJA
+    let searchDebounce = null;
+
+    function searchPlaces(type, query) {
+      clearTimeout(searchDebounce);
+      const spinner = document.getElementById(`${type}Spinner`);
+      const resultsContainer = document.getElementById(`${type}Results`);
+
+      if (!query || query.trim().length < 2) {
+        resultsContainer.classList.add('hidden');
+        resultsContainer.innerHTML = '';
+        return;
+      }
+
+      spinner.classList.remove('hidden');
+
+      searchDebounce = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/places/search?q=${encodeURIComponent(query)}`);
+          const data = await res.json();
+          spinner.classList.add('hidden');
+
+          if (data.success && data.results.length > 0) {
+            resultsContainer.innerHTML = data.results.map(item => `
+              <div onclick="selectPlace('${type}', '${item.name.replace(/'/g, "\\'")}', ${item.lat}, ${item.lng})" 
+                class="px-4 py-2.5 hover:bg-emerald-50 cursor-pointer border-b border-gray-50 flex items-center gap-2 text-xs">
+                <i class="fa-solid fa-location-dot text-emerald-600"></i>
+                <div class="truncate">
+                  <p class="font-bold text-gray-800">${item.name}</p>
+                  <p class="text-[10px] text-gray-400 truncate">${item.fullAddress}</p>
+                </div>
+              </div>
+            `).join('');
+            resultsContainer.classList.remove('hidden');
+          } else {
+            resultsContainer.innerHTML = `<p class="p-3 text-xs text-gray-400 text-center">Hakuna eneo lililopatikana</p>`;
+            resultsContainer.classList.remove('hidden');
+          }
+        } catch (err) {
+          spinner.classList.add('hidden');
+        }
+      }, 350);
+    }
+
+    function selectPlace(type, name, lat, lng) {
+      document.getElementById(`${type}Input`).value = name;
+      document.getElementById(`${type}Results`).classList.add('hidden');
+
+      if (type === 'pickup') {
+        pickupCoords = [lat, lng];
+        pickupMarker.setLatLng(pickupCoords);
+      } else {
+        destCoords = [lat, lng];
+        destMarker.setLatLng(destCoords);
+      }
+
+      updateRouteAndFares();
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#pickupInput')) document.getElementById('pickupResults').classList.add('hidden');
+      if (!e.target.closest('#destInput')) document.getElementById('destResults').classList.add('hidden');
+    });
+
+    let currentDistanceKm = 7.8;
+
+    async function updateRouteAndFares() {
+      routeLine.setLatLngs([pickupCoords, destCoords]);
+      map.fitBounds([pickupCoords, destCoords], { padding: [50, 50] });
+
+      const types = ['boda', 'bajaj', 'standard', 'xl'];
+      for (const t of types) {
+        try {
+          const res = await fetch('/api/rides/estimate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pickup: { lat: pickupCoords[0], lng: pickupCoords[1] },
+              destination: { lat: destCoords[0], lng: destCoords[1] },
+              rideType: t
+            })
+          });
+          const d = await res.json();
+          if (d.success) {
+            document.getElementById(`fare-${t}`).innerText = `TZS ${d.fare.toLocaleString()}`;
+            if (t === selectedRideType) {
+              currentFare = d.fare;
+              currentDistanceKm = d.distanceKm;
+              document.getElementById('tripDistance').innerText = `Umbali: ${d.distanceKm} km (${d.estimatedMinutes} dk)`;
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    function onPaymentProviderChange() {
+      const provider = document.getElementById('paymentProviderSelect').value;
+      const phoneContainer = document.getElementById('phoneInputContainer');
+      const icon = document.getElementById('paymentIcon');
+
+      if (provider === 'cash') {
+        phoneContainer.classList.add('hidden');
+        icon.innerHTML = '<i class="fa-solid fa-money-bill-wave text-emerald-600"></i>';
+      } else {
+        phoneContainer.classList.remove('hidden');
+        icon.innerHTML = '<i class="fa-solid fa-mobile-screen text-rose-600"></i>';
+      }
+    }
+
+    // 3. UNGANISHA NA SOCKET.IO
+    const socket = io();
+    let selectedRideType = 'standard';
+    let currentFare = 11900;
+    let activeRideId = null;
+
+    socket.on('connect', () => {
+      const statusBadge = document.getElementById('serverStatus');
+      statusBadge.className = "text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full flex items-center gap-1.5 ml-2";
+      statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Seva Imewaka (Online)`;
+
+      socket.emit('driver:online', {
+        id: "drv_101",
+        name: "Juma Rashid",
+        location: { lat: currentCarPos[0], lng: currentCarPos[1] }
+      });
+
+      updateRouteAndFares();
+    });
+
+    function selectRide(type, name) {
+      selectedRideType = type;
+      document.querySelectorAll('.ride-card').forEach(card => {
+        card.classList.remove('border-2', 'border-emerald-500', 'bg-emerald-50/50');
+        card.classList.add('border-gray-200');
+      });
+      const activeCard = document.getElementById(`ride-${type}`);
+      activeCard.classList.remove('border-gray-200');
+      activeCard.classList.add('border-2', 'border-emerald-500', 'bg-emerald-50/50');
+      updateRouteAndFares();
+    }
+
+    function requestRide() {
+      document.getElementById('bookingState').classList.add('hidden');
+      document.getElementById('searchingState').classList.remove('hidden');
+
+      socket.emit('passenger:request_ride', {
+        passengerName: "Mteja",
+        pickup: { lat: pickupCoords[0], lng: pickupCoords[1], address: document.getElementById('pickupInput').value },
+        destination: { lat: destCoords[0], lng: destCoords[1], address: document.getElementById('destInput').value },
+        rideType: selectedRideType,
+        distanceKm: currentDistanceKm,
+        paymentMethod: document.getElementById('paymentProviderSelect').value,
+        fare: currentFare
+      });
+    }
+
+    socket.on('driver:incoming_ride', (data) => {
+      activeRideId = data.rideId;
+      document.getElementById('driverOfferFare').innerText = `TZS ${data.fare.toLocaleString()}`;
+      document.getElementById('driverReqPickup').innerHTML = `<strong>Kutoka:</strong> ${data.pickup.address || 'Posta'}`;
+      document.getElementById('driverReqDest').innerHTML = `<strong>Kwenda:</strong> ${data.destination.address || 'Mlimani City'}`;
+      document.getElementById('incomingRequestCard').classList.remove('hidden');
+      document.getElementById('noRequestsMsg').classList.add('hidden');
+    });
+
+    function acceptRideFromDriver() {
+      socket.emit('driver:accept_ride', { rideId: activeRideId, driverId: "drv_101" });
+      document.getElementById('incomingRequestCard').classList.add('hidden');
+      document.getElementById('noRequestsMsg').classList.remove('hidden');
+    }
+
+    function declineRideFromDriver() {
+      document.getElementById('incomingRequestCard').classList.add('hidden');
+      document.getElementById('noRequestsMsg').classList.remove('hidden');
+    }
+
+    socket.on('passenger:ride_accepted', (data) => {
+      activeRideId = data.rideId;
+      document.getElementById('searchingState').classList.add('hidden');
+      document.getElementById('driverFoundState').classList.remove('hidden');
+      document.getElementById('matchedDriverName').innerText = data.driver.name;
+      document.getElementById('finalFare').innerText = `TZS ${data.fare.toLocaleString()}`;
+
+      let steps = 0;
+      const interval = setInterval(() => {
+        steps++;
+        currentCarPos[0] += (pickupCoords[0] - currentCarPos[0]) * 0.12;
+        currentCarPos[1] += (pickupCoords[1] - currentCarPos[1]) * 0.12;
+        driverCarMarker.setLatLng(currentCarPos);
+        if (steps > 20) clearInterval(interval);
+      }, 350);
+    });
+
+    // 4. MALIPO YA STK PUSH (M-PESA / TIGO PESA)
+    async function triggerStkPush() {
+      const provider = document.getElementById('paymentProviderSelect').value;
+      const phone = document.getElementById('payerPhoneNumber').value;
+
+      if (!phone || phone.trim().length < 9) {
+        alert("Tafadhali weka namba sahihi ya simu ya kufanya malipo!");
+        return;
+      }
+
+      // Fungua modal ya STK Push
+      const modal = document.getElementById('stkModal');
+      document.getElementById('stkStepPrompt').classList.remove('hidden');
+      document.getElementById('stkStepSuccess').classList.add('hidden');
+      document.getElementById('stkAmountDisplay').innerText = `TZS ${currentFare.toLocaleString()}`;
+      document.getElementById('stkPhoneDisplay').innerText = phone;
+      document.getElementById('stkProviderDisplay').innerText = provider.toUpperCase();
+      modal.classList.remove('hidden');
+
+      try {
+        const response = await fetch('/api/payments/stk-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phoneNumber: phone,
+            provider: provider,
+            amount: currentFare,
+            rideId: activeRideId || ("RIDE_" + Date.now())
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Badili modal kuonyesha stakabadhi ya ushindi
+          document.getElementById('stkStepPrompt').classList.add('hidden');
+          document.getElementById('stkStepSuccess').classList.remove('hidden');
+          document.getElementById('stkTxIdDisplay').innerText = data.transactionId;
+          document.getElementById('stkPaidAmount').innerText = `TZS ${currentFare.toLocaleString()}`;
+        }
+      } catch (err) {
+        alert("Hitilafu ya kutuma ombi la malipo.");
+        closeStkModal();
+      }
+    }
+
+    function closeStkModal() {
+      document.getElementById('stkModal').classList.add('hidden');
+    }
+
+    function completeCurrentRide() {
+      if (activeRideId) {
+        socket.emit('ride:complete', { rideId: activeRideId });
+        alert("🎉 Hongera! Safari imekamilika na imehifadhiwa rasmi kwenye Hifadhidata!");
+        cancelSearch();
+      }
+    }
+
+    function cancelSearch() {
+      document.getElementById('searchingState').classList.add('hidden');
+      document.getElementById('driverFoundState').classList.add('hidden');
+      document.getElementById('bookingState').classList.remove('hidden');
+      document.getElementById('incomingRequestCard').classList.add('hidden');
+      document.getElementById('noRequestsMsg').classList.remove('hidden');
+    }
+
+    function toggleMode() {
+      document.getElementById('driverPanel').classList.toggle('hidden');
+    }
+
+    // 5. HISTORIA YA SAFARI & MALIPO
+    async function openHistoryModal() {
+      const modal = document.getElementById('historyModal');
+      const container = document.getElementById('historyListContainer');
+      modal.classList.remove('hidden');
+      container.innerHTML = '<p class="text-center text-xs text-gray-400 py-6"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Inapakia historia...</p>';
+
+      try {
+        const res = await fetch('/api/rides/history');
+        const data = await res.json();
+
+        if (data.success && data.rides.length > 0) {
+          container.innerHTML = data.rides.map(r => {
+            const dateStr = new Date(r.createdAt).toLocaleString('sw-TZ', { dateStyle: 'medium', timeStyle: 'short' });
+            return `
+              <div class="p-3.5 bg-gray-50 hover:bg-emerald-50/50 rounded-2xl border border-gray-100 transition">
+                <div class="flex justify-between items-center mb-1.5">
+                  <span class="text-xs font-black text-gray-900">TZS ${r.fare.toLocaleString()}</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[9px] bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full uppercase">${r.paymentMethod || 'cash'}</span>
+                    <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase">${r.rideType}</span>
+                  </div>
+                </div>
+                <div class="text-xs text-gray-700 space-y-0.5">
+                  <p class="truncate"><span class="text-emerald-600 font-bold">•</span> ${r.pickup.address}</p>
+                  <p class="truncate"><span class="text-rose-500 font-bold">■</span> ${r.destination.address}</p>
+                </div>
+                <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100 text-[10px] text-gray-400 font-medium">
+                  <span>${dateStr}</span>
+                  <span class="font-bold text-gray-600">${r.driver?.name ? `Dereva: ${r.driver.name}` : 'Mteja'}</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          container.innerHTML = '<p class="text-center text-xs text-gray-400 py-6">Hakuna safari zilizopita bado.</p>';
+        }
+      } catch (err) {
+        container.innerHTML = '<p class="text-center text-xs text-rose-500 py-6">Hitilafu ya kupakia historia.</p>';
+      }
+    }
+
+    function closeHistoryModal() {
+      document.getElementById('historyModal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
